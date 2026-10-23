@@ -251,6 +251,19 @@
 #bossHealth.demon { background:linear-gradient(90deg,#8b586c,#b38094); }
 #damageCounter { border-color:#615a48; color:#cbb78b; font-size:13px; }
 #instructions { color:#a4afbf; }
+#workshopControls { position:absolute; left:16px; bottom:112px; display:flex; flex-wrap:wrap; gap:6px; max-width:430px; pointer-events:auto; }
+#workshopControls button, #workshopModal button { padding:9px 13px; color:#e3e9ef; background:#202c3b; border:1px solid #b29c70; border-radius:6px; cursor:pointer; font:inherit; }
+#workshopModal button:disabled { opacity:.45; cursor:default; }
+#workshopModal button:focus-visible, #workshopControls button:focus-visible { outline:2px solid #a8dcff; outline-offset:3px; }
+#workshopModal { z-index:150; overflow:auto; padding:24px; pointer-events:auto; background:#080e18ed; }
+.workshopWindow { width:min(800px,100%); margin:auto; text-align:left; }
+#workshopModal h1 { font-size:26px; margin:18px 0; }
+#workshopModal p { font-size:14px; color:#bcc9d9; line-height:1.6; }
+.closeWorkshop { float:right; }
+.workshopList { display:grid; gap:10px; }
+.workshopList article { display:flex; justify-content:space-between; align-items:center; gap:18px; padding:16px; border:1px solid #485365; border-radius:8px; background:#131d2b; }
+.workshopList article button { flex-shrink:0; }
+#lootReport { position:absolute; bottom:82px; left:16px; max-width:85vw; color:#e3d1a3; font-size:13px; }
 @media(max-width:900px) {
     #bossName { top:205px; font-size:16px; }
     #bossBar { top:234px; width:82vw; }

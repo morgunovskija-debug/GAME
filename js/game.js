@@ -24,8 +24,8 @@ let solarDevourerSpawned = false, solarDevourerDefeated = false;
 let twoFacedDemonSpawned = false, twoFacedDemonDefeated = false;
 let ethernatyTimer = 0, dragonTimer = 0, solarDevourerTimer = 0, twoFacedDemonTimer = 0;
 let worldTime = 0, adaptationGlobal = 0, totalDamage = 0;
-let weaponAdaptation = new Array(11).fill(0);
-let weaponAdaptTurned = new Array(11).fill(false);
+let weaponAdaptation = new Array(14).fill(0);
+let weaponAdaptTurned = new Array(14).fill(false);
 let fireGlow = 0;
 let currentBiome = 'forest', biomeBlend = 0;
 let bgParticles = [];
@@ -73,7 +73,7 @@ function toggleEquip(id){
     renderArtifactModal(); updateArtifactBar();
 }
 function toggleArtifactModal(){
-    if (!currentClass || gameOver || paused || journalOpen) return;
+    if (!currentClass || gameOver || paused || journalOpen || workshopMenuOpen) return;
     clearInput();
     artifactMenuOpen = !artifactMenuOpen;
     document.getElementById("artifactModal").style.display = artifactMenuOpen ? "flex" : "none";
@@ -326,6 +326,8 @@ function selectClass(cls){
 window.addEventListener("keydown", e => {
     if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
     if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+    if (e.code === 'Escape' && workshopMenuOpen){ closeWorkshop(); return; }
+    if (e.code === 'KeyE' && !e.repeat){ interactWorkshop(); return; }
     if (e.code === 'Escape'){ if (!e.repeat) togglePause(); return; }
     if (e.code === 'KeyB'){ if (!e.repeat) toggleJournal(); return; }
     if (e.code === 'KeyH'){ if (!e.repeat) healPlayer(); return; }
@@ -335,7 +337,7 @@ window.addEventListener("keydown", e => {
     if (movementKey) { keys[movementKey] = true; }
 
     if (e.code === "KeyI"){ toggleArtifactModal(); return; }
-    if (artifactMenuOpen) return;
+    if (workshopMenuOpen || artifactMenuOpen) return;
     keys[e.key.toLowerCase()] = true;
     const num = parseInt(e.key);
     if (num >= 1 && num <= 9){ if (inventory.includes(num-1)){ weapon = num-1; updateWeaponUI(); } }
@@ -351,7 +353,7 @@ window.addEventListener("keyup", e => {
 window.addEventListener('blur', pauseOnBlur);
 document.addEventListener('visibilitychange', () => { if (document.hidden) pauseOnBlur(); });
 canvas.addEventListener("mousemove", e => { mouse.x = e.clientX; mouse.y = e.clientY; });
-canvas.addEventListener("mousedown", e => { if (e.button === 0 && !paused && !journalOpen && !artifactMenuOpen) mouse.down = true; });
+canvas.addEventListener("mousedown", e => { if (e.button === 0 && !paused && !journalOpen && !artifactMenuOpen && !workshopMenuOpen) mouse.down = true; });
 window.addEventListener("mouseup", () => mouse.down = false);
 document.querySelectorAll(".weapon").forEach(el => el.addEventListener("click", () => {
     const idx = parseInt(el.dataset.id);
@@ -370,14 +372,14 @@ function updateWeaponUI(){
     });
 }
 function updateWeaponAdaptUI(){
-    for (let i=0;i<11;i++){
+    for (let i=0;i<weapons.length;i++){
         const el = document.getElementById(`adapt${i}`);
         if (el) el.textContent = Math.min(100, Math.floor(weaponAdaptation[i]*.75)) + '%';
     }
 }
 
 function dash(){
-    if (!player || !currentClass || player.dashCooldown > 0 || gameOver || artifactMenuOpen || paused || journalOpen) return;
+    if (!player || !currentClass || player.dashCooldown > 0 || gameOver || workshopMenuOpen || artifactMenuOpen || paused || journalOpen) return;
     let dx=0, dy=0;
     if (keys["w"]||keys["arrowup"]) dy--;
     if (keys["s"]||keys["arrowdown"]) dy++;
@@ -385,9 +387,12 @@ function dash(){
     if (keys["d"]||keys["arrowright"]) dx++;
     if (!dx && !dy){ const a = angleTo(player, mouse); dx=Math.cos(a); dy=Math.sin(a); }
     else { const l=Math.hypot(dx,dy); dx/=l; dy/=l; }
-    player.x = clamp(player.x + dx*135, 30, canvas.width-30);
-    player.y = clamp(player.y + dy*135, 120, GROUND()-14);
-    player.invincible = 520;
+    const dashStart = {x:player.x, y:player.y};
+    const dashRange = hasArtifact('solar_shield') ? 230 : 135;
+    player.x = clamp(player.x + dx*dashRange, 30, canvas.width-30);
+    player.y = clamp(player.y + dy*dashRange, 120, GROUND()-14);
+    player.invincible = hasArtifact('solar_shield') ? 850 : 520;
+    if (hasArtifact('solar_shield')) combatVisual = {kind:'dash', x:dashStart.x, y:dashStart.y, tx:player.x, ty:player.y, life:300};
     player.dashCooldown = hasArtifact('ethernaty_core') ? 880*0.6 : 880;
     particle(player.x, player.y, "#44ddff", 26, 8, .8);
 }
@@ -399,7 +404,15 @@ function drawWeaponInHand(idx){
     const w = weapons[idx]; if (!w) return;
     ctx.save(); ctx.translate(10,0); ctx.lineCap="round"; ctx.lineJoin="round";
     ctx.shadowBlur = visualMode === "minimal" ? 0 : 4; ctx.shadowColor = w.color;
-    if (idx===0){
+    if (idx===11){
+        ctx.fillStyle='#766959'; ctx.fillRect(-15,-6,23,12);
+        ctx.fillStyle='#eee4ce'; ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(83,-19); ctx.lineTo(70,12); ctx.lineTo(0,8); ctx.closePath(); ctx.fill();
+    } else if (idx===12){
+        const g=ctx.createLinearGradient(0,-12,44,12); g.addColorStop(0,'#ff6d9e'); g.addColorStop(.5,'#8bfff5'); g.addColorStop(1,'#c19bff');
+        ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(8,0); ctx.lineTo(28,-20); ctx.lineTo(50,0); ctx.lineTo(28,20); ctx.closePath(); ctx.fill();
+    } else if (idx===13){
+        ctx.strokeStyle='#b7a2ef'; ctx.lineWidth=7; ctx.beginPath(); ctx.moveTo(-12,0); ctx.lineTo(42,0); ctx.moveTo(25,-17); ctx.lineTo(36,0); ctx.lineTo(25,17); ctx.stroke();
+    } else if (idx===0){
         ctx.rotate(-.08);
         ctx.fillStyle="#183d2b"; ctx.fillRect(-8,-5,48,10);
         ctx.fillStyle="#55ff88"; ctx.beginPath(); ctx.moveTo(5,-10); ctx.lineTo(55,-4); ctx.lineTo(62,0); ctx.lineTo(55,4); ctx.lineTo(5,10); ctx.closePath(); ctx.fill();
@@ -474,9 +487,10 @@ function spawnPlayerProjectile(a,damage,color,wi,speed=10,radius=10,life=1200,ex
         radius, damage, life, color, weaponIdx:wi, trail:[], ...extra });
 }
 function attack(){
-    if (!player || !currentClass || gameOver || paused || journalOpen || artifactMenuOpen || player.attackCooldown > 0) return;
+    if (!player || !currentClass || gameOver || paused || journalOpen || workshopMenuOpen || artifactMenuOpen || player.attackCooldown > 0) return;
     if (!inventory.includes(weapon)){ weapon = inventory[0]||0; updateWeaponUI(); return; }
     const w = weapons[weapon];
+    if (weapon >= 11){ attackCraftedWeapon(); return; }
     if (weapon < 7){
         const cost = w.mana * (hasArtifact('ethernaty_core') ? 0.8 : 1);
         if (player.mana < cost) return;
@@ -1298,9 +1312,13 @@ function updateTwoFacedDemon(dt){
 //  ОПАСНОСТИ АРЕНЫ
 // ================================================================
 function hurtPlayer(amount, color="#ff3333", fireSource=false){
-    if (!player || player.invincible > 0 || gameOver || paused || journalOpen || artifactMenuOpen) return false;
+    if (!player || player.invincible > 0 || gameOver || paused || journalOpen || artifactMenuOpen || workshopMenuOpen) return false;
     amount *= DIFFICULTIES[activeDifficulty].damage;
     if (fireSource && hasArtifact('dragon_heart')) amount *= 0.75;
+    if (hasArtifact('adaptation_wheel')){
+        amount *= Math.max(0, 1 - playerAdaptation * .02);
+        playerAdaptation = Math.min(50, playerAdaptation + 1);
+    }
     player.hp -= amount; player.invincible = 680;
     damageNumber(player.x, player.y-26, Math.floor(amount), color, true);
     particle(player.x, player.y, color, 18, 6);
@@ -1469,7 +1487,7 @@ function hitBoss(p){
                 showMessage(`🔯 АДАПТАЦИЯ 50%: ${weapons[wi].name} — колесо Махораги поворачивается!`);
                 }
             const damage = Math.max(1, Math.floor(p.damage*(1-resist)));
-            boss.hp -= damage; totalDamage += damage;
+            boss.hp -= damage; igniteTarget(boss); totalDamage += damage;
             damageNumber(boss.x+random(-30,30), boss.y+random(-20,20), damage, p.color, true);
             particle(p.x, p.y, p.color, 12, 6, .6);
             applyLifesteal(damage);
@@ -1482,7 +1500,7 @@ function hitBoss(p){
     if (ethernaty1 && !firstEthernatyDefeated){
         if (Math.hypot(p.x-ethernaty1.x, p.y-ethernaty1.y) < ethernaty1.radius + p.radius){
             const damage = Math.max(1, Math.floor(p.damage*.7));
-            ethernaty1.hp -= damage; totalDamage += damage;
+            ethernaty1.hp -= damage; igniteTarget(ethernaty1); totalDamage += damage;
             damageNumber(ethernaty1.x, ethernaty1.y, damage, p.color, true);
             particle(p.x, p.y, p.color, 16, 8, .6);
             applyLifesteal(damage);
@@ -1493,7 +1511,7 @@ function hitBoss(p){
     for (const mn of minions){
         if (Math.hypot(p.x-mn.x, p.y-mn.y) < mn.radius + p.radius){
             const damage = Math.max(1, Math.floor(p.damage));
-            mn.hp -= damage; totalDamage += damage;
+            mn.hp -= damage; igniteTarget(mn); totalDamage += damage;
             damageNumber(mn.x, mn.y, damage, "#ffcc66");
             particle(p.x, p.y, "#ffaa44", 10, 6, .5);
             applyLifesteal(damage);
@@ -1505,7 +1523,7 @@ function hitBoss(p){
         // вытянутый хитбокс под силуэт дракона
         if ((dx*dx)/((120+p.radius)**2) + (dy*dy)/((74+p.radius)**2) < 1){
             const damage = Math.max(1, Math.floor(p.damage*.8));
-            dragon.hp -= damage; totalDamage += damage;
+            dragon.hp -= damage; igniteTarget(dragon); totalDamage += damage;
             dragon.hitFlash = 1;
             damageNumber(dragon.x+random(-50,50), dragon.y+random(-30,30), damage, p.color, true);
             fireBurst(p.x, p.y, 8, 5, .8);
@@ -1524,7 +1542,7 @@ function hitBoss(p){
         }
         if (hitSeg){
             const damage = Math.max(1, Math.floor(p.damage));
-            w.hp -= damage; totalDamage += damage; w.hitFlash = 1;
+            w.hp -= damage; igniteTarget(w); totalDamage += damage; w.hitFlash = 1;
             damageNumber(w.head.x+random(-40,40), w.head.y+random(-30,30), damage, p.color, true);
             fireBurst(p.x, p.y, 8, 5, .8);
             applyLifesteal(damage);
@@ -1533,7 +1551,7 @@ function hitBoss(p){
         for (const mw of w.miniWorms){
             if (distance(p, mw) < mw.radius + p.radius){
                 const damage = Math.max(1, Math.floor(p.damage*.8));
-                mw.hp -= damage; totalDamage += damage;
+                mw.hp -= damage; igniteTarget(mw); igniteTarget(w); totalDamage += damage;
                 damageNumber(mw.x, mw.y, damage, p.color);
                 fireBurst(p.x, p.y, 6, 4, .6);
                 applyLifesteal(damage);
@@ -1545,7 +1563,7 @@ function hitBoss(p){
         const w = twoFacedDemon;
         if (distance(p, w) < w.radius + p.radius){
             const damage = Math.max(1, Math.floor(p.damage));
-            w.hp -= damage; totalDamage += damage; w.hitFlash = 1;
+            w.hp -= damage; igniteTarget(w); totalDamage += damage; w.hitFlash = 1;
             damageNumber(w.x+random(-40,40), w.y+random(-50,10), damage, p.color, true);
             fireBurst(p.x, p.y, 8, 5, .8);
             applyLifesteal(damage);
@@ -1569,10 +1587,11 @@ function hitPlayerProjectile(p){
 //  ОБНОВЛЕНИЕ
 // ================================================================
 function update(dt){
-    if (gameOver || !currentClass || artifactMenuOpen || paused || journalOpen) return;
+    if (gameOver || !currentClass || workshopMenuOpen || artifactMenuOpen || paused || journalOpen) return;
     runElapsed += dt;
     healCooldown = Math.max(0, healCooldown - dt);
     updateRunHUD();
+    updateWorkshopHUD();
     worldTime += dt;
     if (particles.length > 260) particles.splice(0, particles.length - 260);
     if (fireGlow > 0) fireGlow = Math.max(0, fireGlow - dt*.0012);
@@ -1599,7 +1618,8 @@ function update(dt){
     player.y = clamp(player.y, 130, GROUND()-14);
     if (mouse.down) attack();
     player.attackCooldown -= dt; player.invincible -= dt; player.dashCooldown -= dt;
-    player.mana = clamp(player.mana + dt*.015*classBonus.manaRegenMult, 0, player.maxMana);
+    updateCraftedCombat(dt);
+    if (!(weapon === 12 && mouse.down && channelActive)) player.mana = clamp(player.mana + dt*.015*classBonus.manaRegenMult, 0, player.maxMana);
     player.hp = Math.min(player.hp + dt/1000*(hasArtifact('solar_core')?3:1), player.maxHp);
 
     // --- Махорага
@@ -1634,34 +1654,21 @@ function update(dt){
             `ФАЗА ${boss.phase} — АДАПТАЦИЯ: ${Math.min(100, Math.floor(adaptationGlobal/60*100))}%`;
         document.getElementById("bossHealth").style.width = `${Math.max(0, boss.hp/boss.maxHp*100)}%`;
         if (boss.hp <= 0){
+            recordBossKill(0);
             bossDefeated = true; currentBiome = 'cosmic';
-            showMessage("МАХОРАГА ПОВЕРЖЕН! ETHERNATY приближается...");
+            showMessage("Boss defeated! Use the summon panel: Ethernaty is unlocked.");
             particle(boss.x, boss.y, "#ffd700", 90, 20, 1);
             pickups.push({ x: boss.x-150, y: boss.y-50, weaponIndex:5, color:"#00ffaa" });
             pickups.push({ x: boss.x+150, y: boss.y-50, weaponIndex:6, color:"#aa00ff" });
             pickups.push({ x: boss.x, y: boss.y-90, artifactId:'mahoraga_fang' });
-            player.maxHp += 200; player.hp = player.maxHp;
+            if (firstBossKill) player.maxHp += 200;
+            player.hp = player.maxHp;
             ethernatyTimer = 0;
-            document.getElementById("bossName").textContent = "⏳ ETHERNATY ПРИБЫВАЕТ...";
+            document.getElementById("bossName").textContent = "SUMMON PANEL - ETHERNATY UNLOCKED";
             document.getElementById("bossName").className = "ethernaty";
         }
     }
 
-    // --- появление ETHERNATY
-    if (bossDefeated && !ethernatySpawned){
-        ethernatyTimer += dt/1000;
-        if (ethernatyTimer >= 8){
-            ethernaty1 = createEthernaty1(); ethernatySpawned = true;
-            document.getElementById("bossName").textContent = "⭐ ETHERNATY — КОСМИЧЕСКИЙ СТРАЖ";
-            document.getElementById("bossName").className = "ethernaty";
-            document.getElementById("phase").className = "ethernaty";
-            document.getElementById("bossBar").className = "ethernaty";
-            document.getElementById("bossHealth").className = "ethernaty";
-            const el = document.getElementById("message"); el.className = "ethernaty";
-            showMessage("⭐ ETHERNATY ПРИБЫЛ!");
-            particle(ethernaty1.x, ethernaty1.y, "#ff88ff", 120, 25, 1.5);
-            }
-    }
     // --- ETHERNATY
     if (ethernaty1 && !firstEthernatyDefeated){
         const e = ethernaty1;
@@ -1679,44 +1686,24 @@ function update(dt){
         document.getElementById("phase").textContent = `✨ ETHERNATY — HP ${Math.max(0,Math.ceil(e.hp))}`;
         document.getElementById("bossHealth").style.width = `${Math.max(0, e.hp/e.maxHp*100)}%`;
         if (e.hp <= 0){
+            recordBossKill(1);
             firstEthernatyDefeated = true;
             currentBiome = 'volcanic';
             enemyProjectiles = [];
-            showMessage("⭐ ETHERNATY ПОВЕРЖЕН! Земля дрожит...");
-            particle(e.x, e.y, "#ffd700", 130, 25, 1.5); player.maxHp += 200; player.hp = player.maxHp;
+            showMessage("Boss defeated! Use the summon panel: Fire Destroyer is unlocked.");
+            particle(e.x, e.y, "#ffd700", 130, 25, 1.5); if (firstBossKill) player.maxHp += 200;
+            player.hp = player.maxHp;
             pickups.push({ x: e.x-160, y: e.y-40, weaponIndex:7, color:"#ff44ff" });
             pickups.push({ x: e.x+160, y: e.y-40, weaponIndex:8, color:"#44ffcc" });
             pickups.push({ x: e.x, y: e.y-90, artifactId:'ethernaty_core' });
             dragonTimer = 0;
-            document.getElementById("bossName").textContent = "⏳ ЧТО-ТО ПРОСЫПАЕТСЯ В ВУЛКАНЕ...";
+            document.getElementById("bossName").textContent = "SUMMON PANEL - FIRE DESTROYER UNLOCKED";
             document.getElementById("bossName").className = "fire";
             document.getElementById("message").className = "fire";
             document.getElementById("phase").className = "fire";
         }
     }
 
-    // --- появление FIRE DESTROYER
-    if (firstEthernatyDefeated && !dragonSpawned){
-        dragonTimer += dt/1000;
-        if (dragonTimer >= 1.5 && dragonTimer < 6 && Math.random() < .25){
-            fireBurst(random(0,canvas.width), GROUND()-random(0,20), 6, 6, 1.3);
-            }
-        if (dragonTimer >= 6 && !dragonSpawned){
-            dragon = createDragon(); dragonSpawned = true;
-            dragon.x = canvas.width/2; dragon.y = -160;
-            dragon.state = 'idle'; dragon.attackCooldown = 2200;
-            document.getElementById("bossName").textContent = "🔥 FIRE DESTROYER";
-            document.getElementById("bossBar").className = "fire";
-            document.getElementById("bossHealth").className = "fire";
-            document.getElementById("bossHealth").style.width = "100%";
-            const warn = document.getElementById("bossWarning");
-            warn.style.display = "flex";
-            setTimeoutSafe(() => warn.style.display = "none", 2400);
-            showMessage("🔥 FIRE DESTROYER ПРОБУЖДЁН!");
-            fireGlow = 1;
-            fireBurst(canvas.width/2, canvas.height/2, 140, 16, 2);
-        }
-    }
     // --- FIRE DESTROYER
     if (dragon && !dragonDefeated){
         updateDragon(dt);
@@ -1727,113 +1714,65 @@ function update(dt){
         }
         document.getElementById("bossHealth").style.width = `${Math.max(0, dragon.hp/dragon.maxHp*100)}%`;
         if (dragon.hp <= 0){
+            recordBossKill(2);
             dragonDefeated = true;
             enemyProjectiles = []; meteors = []; tornadoes = []; beams = []; shockwaves = []; minions = []; geysers = [];
-            showMessage("🔥 FIRE DESTROYER ПОВЕРЖЕН! Небо раскалывается...");
+            showMessage("Boss defeated! Use the summon panel: Solar Devourer is unlocked.");
             for (let i=0;i<10;i++) setTimeoutSafe(() => fireBurst(dragon.x+random(-150,150), dragon.y+random(-90,90), 50, 14, 2), i*120);
             fireBurst(dragon.x, dragon.y, 220, 22, 2.6);
             pickups.push({ x: dragon.x-180, y: dragon.y+40, weaponIndex:9, color:"#ff7733" });
             pickups.push({ x: dragon.x+180, y: dragon.y+40, weaponIndex:10, color:"#ffaa22" });
             grantArtifact('dragon_heart', dragon.x, dragon.y+70);
-            player.maxHp += 250; player.hp = player.maxHp;
+            if (firstBossKill) player.maxHp += 250;
+            player.hp = player.maxHp;
             solarDevourerTimer = 0;
-            document.getElementById("bossName").textContent = "⏳ ЧТО-ТО ОГРОМНОЕ ПРОБУЖДАЕТСЯ ПОД ЗЕМЛЁЙ...";
+            document.getElementById("bossName").textContent = "SUMMON PANEL - SOLAR DEVOURER UNLOCKED";
             document.getElementById("bossName").className = "solar";
             document.getElementById("message").className = "solar";
             document.getElementById("phase").className = "solar";
         }
     }
 
-    // --- появление SOLAR DEVOURER
-    if (dragonDefeated && !solarDevourerSpawned){
-        solarDevourerTimer += dt/1000;
-        if (solarDevourerTimer >= 1.5 && solarDevourerTimer < 6 && Math.random() < .3){
-            fireBurst(random(0,canvas.width), GROUND()-random(0,30), 7, 6, 1.4);
-            }
-        if (solarDevourerTimer >= 6 && !solarDevourerSpawned){
-            solarDevourer = createSolarDevourer(); solarDevourerSpawned = true;
-            document.getElementById("bossName").textContent = "☀️ SOLAR DEVOURER";
-            document.getElementById("bossName").className = "solar";
-            document.getElementById("bossBar").className = "solar";
-            document.getElementById("bossHealth").className = "solar";
-            document.getElementById("bossHealth").style.width = "100%";
-            document.getElementById("phase").className = "solar";
-            document.getElementById("message").className = "solar";
-            const warn = document.getElementById("bossWarning");
-            warn.querySelector(".warnTitle").textContent = "SOLAR DEVOURER";
-            warn.querySelector(".warnSub").textContent = "ПРОБУЖДЁН";
-            warn.style.display = "flex";
-            setTimeoutSafe(() => warn.style.display = "none", 2400);
-            showMessage("☀️ SOLAR DEVOURER ВЫРЫВАЕТСЯ ИЗ НЕДР!");
-            fireGlow = 1;
-            fireBurst(canvas.width/2, canvas.height*.3, 160, 18, 2.2);
-        }
-    }
     // --- SOLAR DEVOURER
     if (solarDevourer && !solarDevourerDefeated){
         updateSolarDevourer(dt);
         document.getElementById("bossHealth").style.width = `${Math.max(0, solarDevourer.hp/solarDevourer.maxHp*100)}%`;
         if (solarDevourer.hp <= 0){
+            recordBossKill(3);
             solarDevourerDefeated = true;
             enemyProjectiles = []; meteors = []; tornadoes = []; beams = []; shockwaves = []; minions = []; geysers = []; solarMines = [];
             solarDevourer.miniWorms = [];
-            showMessage("🏆 SOLAR DEVOURER ПОВЕРЖЕН! Тьма сгущается...");
+            showMessage("Boss defeated! Use the summon panel: The Two-Faced Demon is unlocked.");
             for (let i=0;i<12;i++) setTimeoutSafe(() => fireBurst(solarDevourer.head.x+random(-220,220), solarDevourer.head.y+random(-130,130), 55, 16, 2.4), i*100);
             fireBurst(solarDevourer.head.x, solarDevourer.head.y, 260, 24, 3);
             pickups.push({ x: solarDevourer.head.x, y: solarDevourer.head.y+60, artifactId:'solar_core' });
-            player.maxHp += 300; player.hp = player.maxHp;
+            if (firstBossKill) player.maxHp += 300;
+            player.hp = player.maxHp;
             twoFacedDemonTimer = 0;
-            document.getElementById("bossName").textContent = "⏳ ПРОКЛЯТАЯ ЭНЕРГИЯ СГУЩАЕТСЯ ВО ТЬМЕ...";
+            document.getElementById("bossName").textContent = "SUMMON PANEL - THE TWO-FACED DEMON UNLOCKED";
             document.getElementById("bossName").className = "demon";
             document.getElementById("message").className = "demon";
             document.getElementById("phase").className = "demon";
         }
     }
 
-    // --- появление THE TWO-FACED DEMON
-    if (solarDevourerDefeated && !twoFacedDemonSpawned){
-        twoFacedDemonTimer += dt/1000;
-        if (twoFacedDemonTimer >= 1.5 && twoFacedDemonTimer < 6 && Math.random() < .3){
-            fireBurst(random(0,canvas.width), random(80, canvas.height*.4), 6, 6, 1.2);
-            particle(random(0,canvas.width), random(80,canvas.height*.4), "#ff2255", 10, 5, 1);
-            }
-        if (twoFacedDemonTimer >= 6 && !twoFacedDemonSpawned){
-            twoFacedDemon = createTwoFacedDemon(); twoFacedDemonSpawned = true;
-            document.getElementById("bossName").textContent = "👹 THE TWO-FACED DEMON";
-            document.getElementById("bossName").className = "demon";
-            document.getElementById("bossBar").className = "demon";
-            document.getElementById("bossHealth").className = "demon";
-            document.getElementById("bossHealth").style.width = "100%";
-            document.getElementById("phase").className = "demon";
-            document.getElementById("message").className = "demon";
-            const warn = document.getElementById("bossWarning");
-            warn.querySelector(".warnTitle").textContent = "THE TWO-FACED DEMON";
-            warn.querySelector(".warnSub").textContent = "ПРОБУЖДЁН";
-            warn.style.display = "flex";
-            setTimeoutSafe(() => warn.style.display = "none", 2400);
-            showMessage("👹 THE TWO-FACED DEMON ВОССТАЁТ ИЗ ТЬМЫ!");
-            fireBurst(canvas.width/2, canvas.height*.35, 170, 20, 2.4);
-        }
-    }
     // --- THE TWO-FACED DEMON
     if (twoFacedDemon && !twoFacedDemonDefeated){
         updateTwoFacedDemon(dt);
         document.getElementById("bossHealth").style.width = `${Math.max(0, twoFacedDemon.hp/twoFacedDemon.maxHp*100)}%`;
         if (twoFacedDemon.hp <= 0){
-            twoFacedDemonDefeated = true; victory = true; gameOver = true;
-            saveRecord(); clearInput(); grantArtifact('demon_core', twoFacedDemon.x, twoFacedDemon.y);
-            enemyProjectiles = []; meteors = []; tornadoes = []; beams = []; shockwaves = []; minions = []; geysers = []; demonLightnings = [];
-            showMessage("🏆 THE TWO-FACED DEMON ПОВЕРЖЕН!");
-            pendingTimers.length = 0;
-            fireBurst(twoFacedDemon.x, twoFacedDemon.y, 280, 26, 3.2);
-            document.getElementById("bossName").textContent = "👹 THE TWO-FACED DEMON — ПОВЕРЖЕН";
-            document.getElementById("phase").textContent = "🏆 ВЫ ПОБЕДИЛИ!";
-            document.getElementById("finalDamage").textContent = `Общий урон: ${totalDamage}`;
-            const winEl = document.getElementById("winScreen");
-            winEl.querySelector("h1").textContent = "👹 ПОЛНАЯ ПОБЕДА!";
-            winEl.querySelector("p").textContent = "THE TWO-FACED DEMON повержен. Проклятая энергия рассеивается.";
-            winEl.querySelector('p').textContent += ` ${DIFFICULTIES[activeDifficulty].label} · ${formatTime(runElapsed)}`;
-            winEl.style.display = "flex";
+            twoFacedDemonDefeated = true;
+            if (!killedBosses.has(4)){ victory = true; saveRecord(); }
+            grantArtifact('demon_core', twoFacedDemon.x, twoFacedDemon.y);
+            recordBossKill(4);
+            workshopUnlocked = true;
+            player.x = canvas.width/2; player.y = canvas.height * .65;
+            player.hp = player.maxHp; player.mana = player.maxMana;
+            currentBiome = 'forest';
+            document.getElementById('bossName').textContent = 'CRAFTING SANCTUARY';
+            document.getElementById('phase').textContent = 'E near a station - Summon bosses to farm materials';
+            refreshWorkshopButtons();
+            showMessage('Sanctuary unlocked: accessory station, weapon station and summon panel!');
             return;
         }
     }
@@ -2445,7 +2384,7 @@ function scaleBoss(entity){
 }
 function clearInput(){ keys = {}; mouse.down = false; }
 function togglePause(){
-    if (!currentClass || gameOver || artifactMenuOpen || journalOpen) return;
+    if (!currentClass || gameOver || workshopMenuOpen || artifactMenuOpen || journalOpen) return;
     paused = !paused; clearInput();
     document.getElementById('pauseScreen').style.display = paused ? 'flex' : 'none';
 }
@@ -2454,12 +2393,12 @@ function pauseOnBlur(){
     if (currentClass && !gameOver && !paused && !artifactMenuOpen && !journalOpen) togglePause();
 }
 function toggleJournal(){
-    if (!currentClass || gameOver || artifactMenuOpen || paused) return;
+    if (!currentClass || gameOver || workshopMenuOpen || artifactMenuOpen || paused) return;
     journalOpen = !journalOpen; clearInput();
     document.getElementById('journalScreen').style.display = journalOpen ? 'flex' : 'none';
 }
 function healPlayer(){
-    if (!player || gameOver || paused || journalOpen || artifactMenuOpen || healCooldown > 0 || player.hp >= player.maxHp) return;
+    if (!player || gameOver || paused || journalOpen || workshopMenuOpen || artifactMenuOpen || healCooldown > 0 || player.hp >= player.maxHp) return;
     const config = DIFFICULTIES[activeDifficulty];
     player.hp = Math.min(player.maxHp, player.hp + player.maxHp*config.heal);
     healCooldown = config.healWait;
@@ -2515,6 +2454,8 @@ function loop(now){
         drawDragon();
         drawSolarDevourer();
         drawTwoFacedDemon();
+        drawWorkshop();
+        drawCraftedCombat();
         drawPlayer();
         drawDamageNumbers();
         drawLighting();
@@ -2528,6 +2469,7 @@ requestAnimationFrame(loop);
 //  ПЕРЕЗАПУСК
 // ================================================================
 function restart(){
+    resetWorkshop();
     clearInput(); clearTimeout(messageTimeout);
     document.getElementById('message').style.opacity = 0;
     document.getElementById('attackWarning').style.opacity = 0;
@@ -2546,8 +2488,8 @@ function restart(){
     pendingTimers.length = 0;
     inventory = [0,1,2,3,4]; weapon = 0;
     adaptationGlobal = 0; totalDamage = 0;
-    weaponAdaptation = new Array(11).fill(0);
-    weaponAdaptTurned = new Array(11).fill(false);
+    weaponAdaptation = new Array(14).fill(0);
+    weaponAdaptTurned = new Array(14).fill(false);
     gameOver = false; victory = false; bossDefeated = false; firstEthernatyDefeated = false;
     ethernatySpawned = false; dragonSpawned = false; dragonDefeated = false;
     solarDevourerSpawned = false; solarDevourerDefeated = false;

@@ -1,5 +1,23 @@
 # Boss Rush
 
+## Crafting and boss summons
+
+After the first boss victory, use **E** or **Summon panel** to choose a fight. The panel lists all five bosses; defeating a boss unlocks the next, and defeated bosses can be fought again. Encounters after a victory start only through the panel.
+
+Defeat the Two-Faced Demon to enter the crafting sanctuary with an accessory station, weapon station, and summon panel. Approach a station and press **E**, or use its on-screen button. Materials go directly into your inventory, with an independent **10%** roll for each listed drop on every kill:
+
+| Boss | Material → crafted equipment |
+| --- | --- |
+| Mahoraga | Broken Wheel → Adaptation Wheel; Handle → Handblade |
+| Ethernaty | Rainbow Triangle + Energy Sphere → Plasma Crystal |
+| Fire Destroyer | Inactive Eternal Flame → Eternal Flame |
+| Solar Devourer | Broken Shield Piece → Solar Shield |
+| Two-Faced Demon | Lightning Fragment → Kumatoke |
+
+Crafted accessories use the existing five artifact slots; press **I** to equip them when your slots are full. Select crafted weapons by clicking their weapon-bar buttons. Hold attack to channel Plasma Crystal (600 base DPS, 20 mana/second) or Kumatoke (100 DPS). Handblade swings for 300 base damage over a wide 260-range arc without projectiles. Eternal Flame burns for 50 DPS over five seconds; further hits refresh it. Adaptation Wheel reduces subsequent incoming damage by 2 percentage points per hit, capped at 100%, and resets on boss death. Solar Shield adds a longer protected dash.
+
+Materials, crafted items, and boss unlocks last for the current run, and reset when restarting or reloading. Check these mechanics with `node --test tests/workshop.test.cjs`.
+
 Браузерна Canvas-гра: чотири класи, п’ять послідовних босів, одинадцять видів зброї та артефакти.
 
 ## Запуск
