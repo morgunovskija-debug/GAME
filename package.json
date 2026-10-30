@@ -1,0 +1,9 @@
+{
+  "name": "boss-rush-game",
+  "version": "1.0.0",
+  "description": "2D Boss Rush Web Game",
+  "scripts": {
+    "test": "node --test tests/workshop.test.cjs tests/mobile.test.cjs",
+    "build": "echo 'Static build ready'"
+  }
+}
