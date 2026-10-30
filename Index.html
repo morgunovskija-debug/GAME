@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Ctext y=%2750%27 font-size=%2750%27%3E⚔️%3C/text%3E%3C/svg%3E">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#05070b">
 <title>Boss Rush — П’ять випробувань</title>
 <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -34,8 +38,38 @@
         <div class="weapon hidden" data-id="8"><span class="name">9. Призматический посох</span><span class="adapt">Адапт: <span id="adapt8">0%</span></span></div>
         <div class="weapon hidden" data-id="9"><span class="name">10. Клинок Пепла</span><span class="adapt">Адапт: <span id="adapt9">0%</span></span></div>
         <div class="weapon hidden" data-id="10"><span class="name">11. Посох Магмы</span><span class="adapt">Адапт: <span id="adapt10">0%</span></span></div>
+        <div class="weapon hidden" data-id="14"><span class="name">12. Посох Демона</span><span class="adapt">Адапт: <span id="adapt14">0%</span></span></div>
+        <div class="weapon" data-id="15"><span class="name">★ Dev Stick</span><span class="adapt">9999999</span></div>
     </div>
-    <div id="runTools"><span id="runStatus"></span><label class="visualControl">Ефекти <select id="visualMode" aria-label="Інтенсивність візуальних ефектів"><option value="calm">Спокійні</option><option value="minimal">Мінімальні</option></select></label><button id="healButton" type="button">H · Лікування</button><button id="pauseButton" type="button">Esc · Пауза</button><button id="journalButton" type="button">B · Боси</button></div><div id="instructions">WASD — движение | ЛКМ — атака | ПРОБЕЛ — рывок | 1–0, Q или клик — смена оружия | I — артефакты</div>
+    <div id="runTools"><span id="runStatus"></span><label class="visualControl">Ефекти <select id="visualMode" aria-label="Інтенсивність візуальних ефектів"><option value="calm">Спокійні</option><option value="minimal">Мінімальні</option></select></label><button id="healButton" type="button">H · Лікування</button><button id="pauseButton" type="button">Esc · Пауза</button><button id="journalButton" type="button">B · Боси</button></div><div id="instructions">WASD — движение | ЛКМ — атака | ПРОБЕЛ — рывок | 1–6, Q, Z или клик — смена оружия | I — артефакты</div>
+    <div id="mobileControls" class="mobile-controls" style="display:none;">
+        <div id="joystickZone" class="joystick-zone">
+            <div id="joystickBase" class="joystick-base">
+                <div id="joystickStick" class="joystick-stick"></div>
+            </div>
+        </div>
+        <div id="actionButtons" class="action-buttons">
+            <button id="btnMobileDash" class="mobile-btn btn-dash" type="button" aria-label="Рывок (Dash)">
+                <span class="btn-icon">⚡</span>
+                <span class="btn-lbl">DASH</span>
+            </button>
+            <button id="btnMobileAttack" class="mobile-btn btn-attack" type="button" aria-label="Атака (Attack)">
+                <span class="btn-icon">⚔</span>
+                <span class="btn-lbl">FIRE</span>
+            </button>
+            <div class="mobile-aux-row">
+                <button id="btnMobileHeal" class="mobile-btn btn-aux btn-heal" type="button" aria-label="Лікування (Heal)">
+                    <span class="btn-icon">❤️</span>
+                </button>
+                <button id="btnMobileWeapon" class="mobile-btn btn-aux btn-weapon" type="button" aria-label="Зміна зброї (Next Weapon)">
+                    <span class="btn-icon">⇄</span>
+                </button>
+                <button id="btnMobileInteract" class="mobile-btn btn-aux btn-interact" type="button" aria-label="Майстерня / Виклик (Interact)" style="display:none;">
+                    <span class="btn-icon">⚙</span>
+                </button>
+            </div>
+        </div>
+    </div>
     <div id="message"></div>
     <div id="attackWarning"></div>
     <div id="bossWarning"><div class="warnTitle">FIRE DESTROYER</div><div class="warnSub">ПРОБУЖДЁН</div></div>

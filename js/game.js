@@ -4,11 +4,30 @@
 // ================================================================
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+const isMobileDevice = (() => {
+    if (typeof window === 'undefined') return false;
+    const ua = typeof navigator !== 'undefined' ? (navigator.userAgent || '') : '';
+    const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    const touchPoints = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+    const coarsePointer = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+    return mobileUA || (touchPoints && window.innerWidth <= 1024) || coarsePointer;
+})();
+
+const joystickVector = { x: 0, y: 0, active: false };
+let joystickTouchId = null;
+let aimTouchId = null;
+
 function resize(){
-    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
     // Entity coordinates are clamped by the next simulation step after resizing.
 }
-resize(); window.addEventListener("resize", resize);
+resize();
+window.addEventListener("resize", resize);
+window.addEventListener("orientationchange", () => setTimeout(resize, 100));
+if (typeof window !== 'undefined' && window.visualViewport){
+    window.visualViewport.addEventListener("resize", resize);
+}
 
 const GROUND = () => canvas.height - 60;
 
@@ -16,7 +35,7 @@ let keys = {}, mouse = { x: innerWidth/2, y: innerHeight/2, down: false };
 let player = null, boss = null, ethernaty1 = null, dragon = null, solarDevourer = null, twoFacedDemon = null;
 let projectiles = [], enemyProjectiles = [], particles = [], damageNumbers = [], pickups = [];
 let meteors = [], tornadoes = [], shockwaves = [], beams = [], minions = [], geysers = [], embers = [], solarMines = [], demonLightnings = [];
-let weapon = 0, inventory = [0,1,2,3,4];
+let weapon = 0, inventory = [0,1,2,3,4,15];
 let gameOver = false, victory = false;
 let bossDefeated = false, firstEthernatyDefeated = false;
 let ethernatySpawned = false, dragonSpawned = false, dragonDefeated = false;
@@ -24,8 +43,8 @@ let solarDevourerSpawned = false, solarDevourerDefeated = false;
 let twoFacedDemonSpawned = false, twoFacedDemonDefeated = false;
 let ethernatyTimer = 0, dragonTimer = 0, solarDevourerTimer = 0, twoFacedDemonTimer = 0;
 let worldTime = 0, adaptationGlobal = 0, totalDamage = 0;
-let weaponAdaptation = new Array(14).fill(0);
-let weaponAdaptTurned = new Array(14).fill(false);
+let weaponAdaptation = new Array(16).fill(0);
+let weaponAdaptTurned = new Array(16).fill(false);
 let fireGlow = 0;
 let currentBiome = 'forest', biomeBlend = 0;
 let bgParticles = [];
@@ -45,7 +64,11 @@ const ARTIFACTS = {
     solar_core: { name:"Ядро Солнца", icon:"☀️", color:"#ffcc33", boss:"SOLAR DEVOURER",
         desc:"Контактный урон от SOLAR DEVOURER снижен на 20%, пассивная регенерация HP ускорена втрое." },
     demon_core: { name:"Проклятое Ядро", icon:"👹", color:"#ff2255", boss:"THE TWO-FACED DEMON",
-        desc:"Весь наносимый урон увеличен на 15%, урон от THE TWO-FACED DEMON снижен на 20%." }
+        desc:"Весь наносимый урон увеличен на 15%, урон от THE TWO-FACED DEMON снижен на 20%." },
+    demon_talisman: { name:"Талисман Демона", icon:"🧿", color:"#bb55ff", boss:"THE TWO-FACED DEMON",
+        desc:"Весь получаемый урон снижен на 25%." },
+    demon_horn_charm: { name:"Амулет Рога Демона", icon:"📿", color:"#ff3366", boss:"THE TWO-FACED DEMON",
+        desc:"Весь наносимый урон увеличен на 20%." }
 };
 const ARTIFACT_SLOT_COUNT = 5;
 let ownedArtifacts = [];
@@ -135,7 +158,7 @@ const weapons = [
     { name:"Rainbow Blade",   damage:120, cooldown:500, mana:0,  color:"#ff44ff", category:"melee"  },
     { name:"Prismatic Staff", damage:150, cooldown:800, mana:0,  color:"#44ffcc", category:"magic"  },
     { name:"Ashen Blade",     damage:190, cooldown:520, mana:0,  color:"#ff7733", category:"melee"  },
-    { name:"Magma Staff",     damage:230, cooldown:860, mana:0,  color:"#ffaa22", category:"magic"  }
+    { name:"Magma Staff",     damage:77,  cooldown:860, mana:0,  color:"#ffaa22", category:"magic"  }
 ];
 
 // ================================================================
@@ -284,11 +307,14 @@ const DEMON_LABEL = {
 // ================================================================
 function initBgParticles(){
     bgParticles = [];
-    for (let i=0;i<40;i++) bgParticles.push({ type:'ash', x:Math.random()*canvas.width, y:Math.random()*canvas.height,
+    const countAsh = isMobileDevice ? 12 : 40;
+    const countStars = isMobileDevice ? 10 : 30;
+    const countEmbers = isMobileDevice ? 20 : 70;
+    for (let i=0;i<countAsh;i++) bgParticles.push({ type:'ash', x:Math.random()*canvas.width, y:Math.random()*canvas.height,
         vx:random(-.2,.2), vy:random(-.3,-.1), size:random(1,3), alpha:random(.3,.7) });
-    for (let i=0;i<30;i++) bgParticles.push({ type:'stardust', x:Math.random()*canvas.width, y:Math.random()*canvas.height,
+    for (let i=0;i<countStars;i++) bgParticles.push({ type:'stardust', x:Math.random()*canvas.width, y:Math.random()*canvas.height,
         vx:random(-.5,.5), vy:random(-.5,-.2), size:random(1,3), alpha:random(.4,.9), hue:Math.random()*360 });
-    for (let i=0;i<70;i++) bgParticles.push({ type:'ember', x:Math.random()*canvas.width, y:Math.random()*canvas.height,
+    for (let i=0;i<countEmbers;i++) bgParticles.push({ type:'ember', x:Math.random()*canvas.width, y:Math.random()*canvas.height,
         vx:random(-.4,.4), vy:random(-1.3,-.4), size:random(1.5,4), alpha:random(.5,1), hue:random(10,45) });
 }
 initBgParticles();
@@ -310,7 +336,7 @@ function selectClass(cls){
     else if (cls==='ranger'){ classBonus.damageRanged=1.20; classBonus.speedMult=1.30; startWeapon=4; label="Стрелок"; }
     else if (cls==='summoner'){ classBonus.damageAll=1.15; classBonus.hpBonus=50; classBonus.manaBonus=50; startWeapon=1; label="Призыватель"; }
     player = createPlayer(); boss = createMahoraga();
-    inventory = [0,1,2,3,4]; weapon = startWeapon;
+    inventory = [0,1,2,3,4,15]; weapon = startWeapon;
     document.getElementById("classNameText").textContent = label;
     document.getElementById("classScreen").style.display = "none";
     document.getElementById("winScreen").style.display = "none";
@@ -340,9 +366,15 @@ window.addEventListener("keydown", e => {
     if (workshopMenuOpen || artifactMenuOpen) return;
     keys[e.key.toLowerCase()] = true;
     const num = parseInt(e.key);
-    if (num >= 1 && num <= 9){ if (inventory.includes(num-1)){ weapon = num-1; updateWeaponUI(); } }
+    if (num >= 1 && num <= 5){ if (inventory.includes(num-1)){ weapon = num-1; updateWeaponUI(); } }
+    else if (num === 6){
+        if (inventory.includes(5)){ weapon = 5; updateWeaponUI(); }
+        else if (inventory.includes(15)){ weapon = 15; updateWeaponUI(); }
+    }
+    else if (num >= 7 && num <= 9){ if (inventory.includes(num-1)){ weapon = num-1; updateWeaponUI(); } }
     else if (num === 0){ if (inventory.includes(9)){ weapon = 9; updateWeaponUI(); } }
     else if (e.code === "KeyQ"){ if (inventory.includes(10)){ weapon = 10; updateWeaponUI(); } }
+    else if (e.code === "KeyZ" || e.code === "Backquote"){ if (inventory.includes(15)){ weapon = 15; updateWeaponUI(); } }
     if (e.code === "Space"){ e.preventDefault(); dash(); }
 });
 window.addEventListener("keyup", e => {
@@ -355,10 +387,187 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) pause
 canvas.addEventListener("mousemove", e => { mouse.x = e.clientX; mouse.y = e.clientY; });
 canvas.addEventListener("mousedown", e => { if (e.button === 0 && !paused && !journalOpen && !artifactMenuOpen && !workshopMenuOpen) mouse.down = true; });
 window.addEventListener("mouseup", () => mouse.down = false);
-document.querySelectorAll(".weapon").forEach(el => el.addEventListener("click", () => {
-    const idx = parseInt(el.dataset.id);
-    if (inventory.includes(idx)){ weapon = idx; updateWeaponUI(); }
-}));
+document.querySelectorAll(".weapon").forEach(el => {
+    el.addEventListener("click", () => {
+        const idx = parseInt(el.dataset.id);
+        if (inventory.includes(idx)){ weapon = idx; updateWeaponUI(); }
+    });
+    el.addEventListener("touchstart", () => {
+        const idx = parseInt(el.dataset.id);
+        if (inventory.includes(idx)){ weapon = idx; updateWeaponUI(); }
+    }, { passive: true });
+});
+
+function getActiveBossTarget(){
+    if (typeof activeBoss === 'function'){
+        const ab = activeBoss();
+        if (ab) return ab;
+    }
+    if (twoFacedDemon && !twoFacedDemonDefeated) return twoFacedDemon;
+    if (solarDevourer && !solarDevourerDefeated) return solarDevourer.head || solarDevourer;
+    if (dragon && !dragonDefeated) return dragon;
+    if (ethernaty1 && !firstEthernatyDefeated) return ethernaty1;
+    if (boss && !bossDefeated) return boss;
+    return null;
+}
+
+function cycleNextWeapon(){
+    if (!inventory || inventory.length <= 1) return;
+    const currentPos = inventory.indexOf(weapon);
+    const nextPos = (currentPos + 1) % inventory.length;
+    weapon = inventory[nextPos];
+    updateWeaponUI();
+    if (weapons[weapon]) showMessage(`⚔ ${weapons[weapon].name}`);
+}
+
+function initMobileControls(){
+    const mc = document.getElementById('mobileControls');
+    if (!mc) return;
+    if (isMobileDevice) mc.style.display = 'block';
+
+    const onFirstTouch = () => {
+        mc.style.display = 'block';
+        window.removeEventListener('touchstart', onFirstTouch);
+    };
+    window.addEventListener('touchstart', onFirstTouch, { passive: true });
+
+    // Canvas touch aim & fire
+    canvas.addEventListener("touchstart", e => {
+        if (paused || journalOpen || artifactMenuOpen || workshopMenuOpen) return;
+        for (let i = 0; i < e.changedTouches.length; i++){
+            const t = e.changedTouches[i];
+            if (t.clientX < 220 && t.clientY > window.innerHeight - 220) continue;
+            aimTouchId = t.identifier;
+            mouse.x = t.clientX; mouse.y = t.clientY;
+            mouse.down = true;
+            e.preventDefault();
+            break;
+        }
+    }, { passive: false });
+
+    canvas.addEventListener("touchmove", e => {
+        if (aimTouchId === null) return;
+        for (let i = 0; i < e.changedTouches.length; i++){
+            const t = e.changedTouches[i];
+            if (t.identifier === aimTouchId){
+                mouse.x = t.clientX; mouse.y = t.clientY;
+                e.preventDefault();
+                break;
+            }
+        }
+    }, { passive: false });
+
+    const endAimTouch = e => {
+        if (aimTouchId === null) return;
+        for (let i = 0; i < e.changedTouches.length; i++){
+            if (e.changedTouches[i].identifier === aimTouchId){
+                mouse.down = false;
+                aimTouchId = null;
+                break;
+            }
+        }
+    };
+    canvas.addEventListener("touchend", endAimTouch, { passive: false });
+    canvas.addEventListener("touchcancel", endAimTouch, { passive: false });
+
+    // Virtual Joystick
+    const joystickZone = document.getElementById('joystickZone');
+    const joystickBase = document.getElementById('joystickBase');
+    const joystickStick = document.getElementById('joystickStick');
+
+    if (joystickZone && joystickBase && joystickStick){
+        let baseRect = null;
+        const handleJoystick = (clientX, clientY) => {
+            if (!baseRect) baseRect = joystickBase.getBoundingClientRect();
+            const centerX = baseRect.left + baseRect.width / 2;
+            const centerY = baseRect.top + baseRect.height / 2;
+            const dx = clientX - centerX, dy = clientY - centerY;
+            const dist = Math.hypot(dx, dy);
+            const maxR = baseRect.width * 0.42;
+            const clampedDist = Math.min(dist, maxR);
+            const angle = Math.atan2(dy, dx);
+
+            const knobX = Math.cos(angle) * clampedDist;
+            const knobY = Math.sin(angle) * clampedDist;
+            joystickStick.style.transform = `translate(${knobX}px, ${knobY}px)`;
+
+            const norm = clampedDist / maxR;
+            if (norm > 0.12){
+                joystickVector.x = Math.cos(angle) * norm;
+                joystickVector.y = Math.sin(angle) * norm;
+                joystickVector.active = true;
+            } else {
+                joystickVector.x = 0; joystickVector.y = 0; joystickVector.active = false;
+            }
+        };
+
+        joystickZone.addEventListener("touchstart", e => {
+            e.preventDefault();
+            baseRect = joystickBase.getBoundingClientRect();
+            const t = e.changedTouches[0];
+            joystickTouchId = t.identifier;
+            handleJoystick(t.clientX, t.clientY);
+        }, { passive: false });
+
+        joystickZone.addEventListener("touchmove", e => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++){
+                const t = e.changedTouches[i];
+                if (t.identifier === joystickTouchId){
+                    handleJoystick(t.clientX, t.clientY);
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        const resetJoystick = e => {
+            for (let i = 0; i < e.changedTouches.length; i++){
+                if (e.changedTouches[i].identifier === joystickTouchId){
+                    joystickTouchId = null;
+                    joystickVector.x = 0; joystickVector.y = 0; joystickVector.active = false;
+                    joystickStick.style.transform = "translate(0px, 0px)";
+                    break;
+                }
+            }
+        };
+        joystickZone.addEventListener("touchend", resetJoystick, { passive: false });
+        joystickZone.addEventListener("touchcancel", resetJoystick, { passive: false });
+    }
+
+    // Action buttons
+    const btnDash = document.getElementById('btnMobileDash');
+    if (btnDash){
+        btnDash.addEventListener('touchstart', e => { e.preventDefault(); dash(); }, { passive: false });
+    }
+    const btnAttack = document.getElementById('btnMobileAttack');
+    if (btnAttack){
+        btnAttack.addEventListener('touchstart', e => {
+            e.preventDefault();
+            mouse.down = true;
+            const tgt = getActiveBossTarget();
+            if (tgt){ mouse.x = tgt.x; mouse.y = tgt.y; }
+        }, { passive: false });
+        const releaseAttack = e => { e.preventDefault(); mouse.down = false; };
+        btnAttack.addEventListener('touchend', releaseAttack, { passive: false });
+        btnAttack.addEventListener('touchcancel', releaseAttack, { passive: false });
+    }
+    const btnHeal = document.getElementById('btnMobileHeal');
+    if (btnHeal){
+        btnHeal.addEventListener('touchstart', e => { e.preventDefault(); healPlayer(); }, { passive: false });
+    }
+    const btnWeapon = document.getElementById('btnMobileWeapon');
+    if (btnWeapon){
+        btnWeapon.addEventListener('touchstart', e => { e.preventDefault(); cycleNextWeapon(); }, { passive: false });
+    }
+    const btnInteract = document.getElementById('btnMobileInteract');
+    if (btnInteract){
+        btnInteract.addEventListener('touchstart', e => {
+            e.preventDefault();
+            if (typeof interactWorkshop === 'function') interactWorkshop();
+        }, { passive: false });
+    }
+}
+initMobileControls();
 
 function updateWeaponUI(){
     document.querySelectorAll(".weapon").forEach((el,i) => {
@@ -385,6 +594,7 @@ function dash(){
     if (keys["s"]||keys["arrowdown"]) dy++;
     if (keys["a"]||keys["arrowleft"]) dx--;
     if (keys["d"]||keys["arrowright"]) dx++;
+    if (joystickVector.active){ dx += joystickVector.x; dy += joystickVector.y; }
     if (!dx && !dy){ const a = angleTo(player, mouse); dx=Math.cos(a); dy=Math.sin(a); }
     else { const l=Math.hypot(dx,dy); dx/=l; dy/=l; }
     const dashStart = {x:player.x, y:player.y};
@@ -460,12 +670,24 @@ function drawWeaponInHand(idx){
         const g=ctx.createLinearGradient(0,0,66,0); g.addColorStop(0,"#661100"); g.addColorStop(.5,"#ff7733"); g.addColorStop(1,"#ffdd88");
         ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(63,-3); ctx.lineTo(69,0); ctx.lineTo(63,3); ctx.lineTo(0,10); ctx.closePath(); ctx.fill();
         ctx.fillStyle="#fff2c2"; ctx.fillRect(12,-2,46,4);
-    } else { // Magma Staff
+    } else if (idx===10){ // Magma Staff
         ctx.strokeStyle="#2a1208"; ctx.lineWidth=9; ctx.beginPath(); ctx.moveTo(-12,8); ctx.lineTo(32,-4); ctx.stroke();
         ctx.fillStyle="#3a0f00"; ctx.beginPath(); ctx.arc(42,-7,15,0,7); ctx.fill();
         for (let k=0;k<7;k++){ const q=k*Math.PI*2/7+worldTime*.004; ctx.fillStyle=`hsl(${20+k*5},100%,60%)`;
             ctx.beginPath(); ctx.arc(42+Math.cos(q)*10, -7+Math.sin(q)*10, 2.6, 0, 7); ctx.fill(); }
         ctx.fillStyle="#fff3b0"; ctx.beginPath(); ctx.arc(42,-7,5.5,0,7); ctx.fill();
+    } else if (idx===14){ // Demon Staff
+        ctx.strokeStyle="#300a42"; ctx.lineWidth=8; ctx.beginPath(); ctx.moveTo(-10,7); ctx.lineTo(32,-4); ctx.stroke();
+        ctx.fillStyle="#520a70"; ctx.beginPath(); ctx.arc(38,-6,13,0,7); ctx.fill();
+        ctx.fillStyle="#cc44ff"; ctx.beginPath(); ctx.arc(38,-6,7,0,7); ctx.fill();
+        ctx.fillStyle="#ffffff"; ctx.beginPath(); ctx.arc(38,-6,3,0,7); ctx.fill();
+    } else if (idx===15){ // Dev Stick
+        ctx.strokeStyle="#ff0055"; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(-10,6); ctx.lineTo(32,-4); ctx.stroke();
+        ctx.strokeStyle="#ffff00"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-6,5); ctx.lineTo(30,-3); ctx.stroke();
+        const pulse = 10 + Math.sin(worldTime*.01)*3;
+        ctx.fillStyle="#ff0055"; ctx.beginPath(); ctx.arc(38,-5,pulse,0,7); ctx.fill();
+        ctx.fillStyle="#ffff55"; ctx.beginPath(); ctx.arc(38,-5,pulse*.6,0,7); ctx.fill();
+        ctx.fillStyle="#ffffff"; ctx.beginPath(); ctx.arc(38,-5,pulse*.3,0,7); ctx.fill();
     }
     ctx.shadowBlur = 0; ctx.restore();
 }
@@ -480,6 +702,7 @@ function applyClassBonus(base, wi){
     else if (cat==="magic") m*=classBonus.damageMagic;
     else if (cat==="ranged") m*=classBonus.damageRanged;
     if (hasArtifact('demon_core')) m *= 1.15;
+    if (hasArtifact('demon_horn_charm')) m *= 1.20;
     return base * m * classBonus.damageAll;
 }
 function spawnPlayerProjectile(a,damage,color,wi,speed=10,radius=10,life=1200,extra={}){
@@ -490,7 +713,19 @@ function attack(){
     if (!player || !currentClass || gameOver || paused || journalOpen || workshopMenuOpen || artifactMenuOpen || player.attackCooldown > 0) return;
     if (!inventory.includes(weapon)){ weapon = inventory[0]||0; updateWeaponUI(); return; }
     const w = weapons[weapon];
-    if (weapon >= 11){ attackCraftedWeapon(); return; }
+    if (weapon === 15){
+        player.attackCooldown = w.cooldown;
+        triggerDevStickExplosion();
+        return;
+    }
+    if (weapon === 14){
+        player.attackCooldown = w.cooldown;
+        const a = angleTo(player, mouse), dmg = applyClassBonus(w.damage, weapon);
+        particle(player.x+Math.cos(a)*25, player.y+Math.sin(a)*25, w.color, 16, 7, .7);
+        for(let i=0;i<8;i++) spawnPlayerProjectile(a+(i-3.5)*.09, dmg*.35, "#cc44ff", weapon, 11, 9, 1600, {homing:.025, flame:true});
+        return;
+    }
+    if (weapon >= 11 && weapon <= 13){ attackCraftedWeapon(); return; }
     if (weapon < 7){
         const cost = w.mana * (hasArtifact('ethernaty_core') ? 0.8 : 1);
         if (player.mana < cost) return;
@@ -511,6 +746,32 @@ function attack(){
     else if (weapon===8)  { for(let i=0;i<9;i++) spawnPlayerProjectile(a+(i-4)*.06,dmg*.38,`hsl(${(worldTime*.4+i*40)%360},100%,70%)`,weapon,13+i*.35,7,1600); }
     else if (weapon===9)  [-.22,-.11,0,.11,.22].forEach(o => spawnPlayerProjectile(a+o,dmg*.62,"#ff8844",weapon,18,11,1450,{star:true}));
     else                  { for(let i=0;i<12;i++) spawnPlayerProjectile(a+(i-5.5)*.075,dmg*.34,`hsl(${18+i*3},100%,${58+i}%)`,weapon,10,8,2200,{homing:.035}); }
+}
+
+function triggerDevStickExplosion(){
+    const dmg = 9999999;
+    const target = typeof activeBoss === 'function' ? activeBoss() : (boss || ethernaty1 || dragon || solarDevourer || twoFacedDemon);
+    const enemies = [target, ...(minions || []), ...(solarDevourer?.miniWorms || [])];
+    for (const en of enemies){
+        if (en && en.hp > 0){
+            en.hp -= dmg;
+            totalDamage += dmg;
+            damageNumber(en.x, en.y - 40, dmg, "#ff0055", true);
+            fireBurst(en.x, en.y, 40, 20, 2.5);
+        }
+    }
+    applyLifesteal(dmg);
+    const maxR = Math.hypot(canvas.width, canvas.height);
+    shockwaves.push({ x: canvas.width/2, y: canvas.height/2, r: 10, max: maxR, speed: 32, band: 90, dmg: 0, hit: true, color: "#ff0055" });
+    shockwaves.push({ x: mouse.x, y: mouse.y, r: 10, max: maxR * .8, speed: 36, band: 70, dmg: 0, hit: true, color: "#ffff00" });
+    fireGlow = 1;
+    particle(mouse.x, mouse.y, "#ff0055", 60, 24, 1.5, 12);
+    particle(mouse.x, mouse.y, "#ffff00", 60, 20, 1.5, 10);
+    particle(mouse.x, mouse.y, "#ffffff", 40, 26, 1.2, 8);
+    for (let c=0; c<8; c++){
+        fireBurst(random(0, canvas.width), random(0, canvas.height), 30, 18, 2);
+    }
+    showMessage("💥 DEV STICK: 9999999 FULL MAP EXPLOSION!");
 }
 
 // ================================================================
@@ -1154,7 +1415,7 @@ function startDemonAttack(w){
 function executeDemonAttack(w){
     const p = player, ph = w.phase;
     w.state = 'attack';
-    const dmgScale = 1 + (ph-1)*.2;
+    const dmgScale = (1 + (ph-1)*.2) * 5;
     switch (w.attack){
         case 'dismantle':
             w.salvoLeft = 5 + ph*2; w.salvoTick = 0; w.stateTimer = w.salvoLeft*160 + 300;
@@ -1243,7 +1504,7 @@ function runActiveDemonAttack(w, dt){
             w.salvoTick -= rate; w.salvoLeft--;
             const originX = w.x + (Math.random()<.5 ? -55 : 55), originY = w.y - 40;
             const a = angleTo({x:originX,y:originY}, p) + random(-.3,.3);
-            fireEnemyAt(originX, originY, a, random(13,17), (26+ph*6)*(w.attack==='dismantleBarrage'?.7:1), 9,
+            fireEnemyAt(originX, originY, a, random(13,17), (26+ph*6)*(w.attack==='dismantleBarrage'?.7:1) * 5, 9,
                 Math.random()<.5?"#ff2244":"#661122", 1500, {slash:true});
         }
     }
@@ -1289,7 +1550,7 @@ function updateTwoFacedDemon(dt){
             w.teleportCd = random(2200 - w.phase*250, 3600 - w.phase*300);
         }
         if (player.invincible <= 0 && distance(w, p) < w.radius + p.radius){
-            hurtPlayer(20 + w.phase*8, "#aa1133", true);
+            hurtPlayer((20 + w.phase*8) * 5, "#aa1133", true);
         }
         w.attackCooldown -= dt;
         if (w.attackCooldown <= 0) startDemonAttack(w);
@@ -1297,13 +1558,13 @@ function updateTwoFacedDemon(dt){
     else if (w.state === 'telegraph'){
         w.telegraph -= dt;
         if (Math.random() < .4) particle(w.x, w.y-40, "#ff3355", 2, 3, .5);
-        if (player.invincible <= 0 && distance(w, p) < w.radius + p.radius) hurtPlayer(20 + w.phase*8, "#aa1133", true);
+        if (player.invincible <= 0 && distance(w, p) < w.radius + p.radius) hurtPlayer((20 + w.phase*8) * 5, "#aa1133", true);
         if (w.telegraph <= 0) executeDemonAttack(w);
     }
     else if (w.state === 'attack'){
         w.stateTimer -= dt;
         runActiveDemonAttack(w, dt);
-        if (player.invincible <= 0 && distance(w, p) < w.radius + p.radius) hurtPlayer(20 + w.phase*8, "#aa1133", true);
+        if (player.invincible <= 0 && distance(w, p) < w.radius + p.radius) hurtPlayer((20 + w.phase*8) * 5, "#aa1133", true);
         if (w.stateTimer <= 0) endDemonAttack(w);
     }
 }
@@ -1315,6 +1576,7 @@ function hurtPlayer(amount, color="#ff3333", fireSource=false){
     if (!player || player.invincible > 0 || gameOver || paused || journalOpen || artifactMenuOpen || workshopMenuOpen) return false;
     amount *= DIFFICULTIES[activeDifficulty].damage;
     if (fireSource && hasArtifact('dragon_heart')) amount *= 0.75;
+    if (hasArtifact('demon_talisman')) amount *= 0.75;
     if (hasArtifact('adaptation_wheel')){
         amount *= Math.max(0, 1 - playerAdaptation * .02);
         playerAdaptation = Math.min(50, playerAdaptation + 1);
@@ -1593,7 +1855,8 @@ function update(dt){
     updateRunHUD();
     updateWorkshopHUD();
     worldTime += dt;
-    if (particles.length > 260) particles.splice(0, particles.length - 260);
+    const maxCap = isMobileDevice ? 110 : 260;
+    if (particles.length > maxCap) particles.splice(0, particles.length - maxCap);
     if (fireGlow > 0) fireGlow = Math.max(0, fireGlow - dt*.0012);
 
     const targetBlend = currentBiome==='forest' ? 0 : currentBiome==='cosmic' ? 1 : 2;
@@ -1613,9 +1876,10 @@ function update(dt){
     if (keys["s"]||keys["arrowdown"]) dy++;
     if (keys["a"]||keys["arrowleft"]) dx--;
     if (keys["d"]||keys["arrowright"]) dx++;
+    if (joystickVector.active){ dx += joystickVector.x; dy += joystickVector.y; }
     if (dx||dy){ const l=Math.hypot(dx,dy); player.x += dx/l*player.speed; player.y += dy/l*player.speed; }
     player.x = clamp(player.x, 25, canvas.width-25);
-    player.y = clamp(player.y, 130, GROUND()-14);
+    player.y = clamp(player.y, Math.min(130, Math.max(60, canvas.height * 0.2)), GROUND()-14);
     if (mouse.down) attack();
     player.attackCooldown -= dt; player.invincible -= dt; player.dashCooldown -= dt;
     updateCraftedCombat(dt);
@@ -1764,6 +2028,9 @@ function update(dt){
             twoFacedDemonDefeated = true;
             if (!killedBosses.has(4)){ victory = true; saveRecord(); }
             grantArtifact('demon_core', twoFacedDemon.x, twoFacedDemon.y);
+            pickups.push({ x: twoFacedDemon.x - 140, y: twoFacedDemon.y + 30, artifactId: 'demon_talisman' });
+            pickups.push({ x: twoFacedDemon.x + 140, y: twoFacedDemon.y + 30, artifactId: 'demon_horn_charm' });
+            pickups.push({ x: twoFacedDemon.x, y: twoFacedDemon.y + 50, weaponIndex: 14, color: '#cc44ff' });
             recordBossKill(4);
             workshopUnlocked = true;
             player.x = canvas.width/2; player.y = canvas.height * .65;
@@ -2324,7 +2591,10 @@ function drawProjectiles(){
 function drawParticles(){
     ctx.save();
     ctx.globalCompositeOperation = "source-over";
-    for (const p of particles.slice(-(visualMode === 'minimal' ? 50 : 200))){
+    const maxDraw = (visualMode === 'minimal' || isMobileDevice) ? 45 : 180;
+    const startIdx = Math.max(0, particles.length - maxDraw);
+    for (let i = startIdx; i < particles.length; i++){
+        const p = particles[i];
         ctx.globalAlpha = clamp(p.life,0,1) * .5;
         ctx.fillStyle = p.color;
         ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(.5, Math.min(3, p.size*p.life)), 0, 7); ctx.fill();
@@ -2362,7 +2632,7 @@ function showMessage(text){
 // ================================================================
 
 // Difficulty and run controls. Storage is optional (private browsing/file URLs).
-let visualMode = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'minimal' : 'calm';
+let visualMode = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) || isMobileDevice ? 'minimal' : 'calm';
 try { const saved = localStorage.getItem('boss-rush-visuals'); if (saved === 'calm' || saved === 'minimal') visualMode = saved; } catch {}
 function setVisualMode(value){
     visualMode = value === 'minimal' ? 'minimal' : 'calm';
@@ -2382,7 +2652,12 @@ function scaleBoss(entity){
     entity.hp = Math.round(entity.hp * DIFFICULTIES[activeDifficulty].hp);
     entity.maxHp = entity.hp; return entity;
 }
-function clearInput(){ keys = {}; mouse.down = false; }
+function clearInput(){
+    keys = {}; mouse.down = false;
+    joystickVector.x = 0; joystickVector.y = 0; joystickVector.active = false;
+    const stick = document.getElementById('joystickStick');
+    if (stick) stick.style.transform = 'translate(0px, 0px)';
+}
 function togglePause(){
     if (!currentClass || gameOver || workshopMenuOpen || artifactMenuOpen || journalOpen) return;
     paused = !paused; clearInput();
@@ -2423,6 +2698,15 @@ function updateRunHUD(){
     const button = document.getElementById('healButton');
     button.disabled = healCooldown > 0 || player.hp >= player.maxHp;
     button.textContent = healCooldown > 0 ? `H · ${Math.ceil(healCooldown/1000)} с` : 'H · Лікування';
+
+    const mobileDash = document.getElementById('btnMobileDash');
+    if (mobileDash && player){
+        mobileDash.classList.toggle('cooldown', player.dashCooldown > 0);
+    }
+    const mobileHeal = document.getElementById('btnMobileHeal');
+    if (mobileHeal){
+        mobileHeal.classList.toggle('cooldown', healCooldown > 0 || (player && player.hp >= player.maxHp));
+    }
 }
 document.getElementById('difficulty').addEventListener('change',refreshDifficulty);
 document.getElementById('pauseButton').addEventListener('click',togglePause);
@@ -2486,10 +2770,10 @@ function restart(){
     projectiles = []; enemyProjectiles = []; particles = []; damageNumbers = []; pickups = [];
     meteors = []; tornadoes = []; shockwaves = []; beams = []; minions = []; geysers = []; embers = []; solarMines = []; demonLightnings = [];
     pendingTimers.length = 0;
-    inventory = [0,1,2,3,4]; weapon = 0;
+    inventory = [0,1,2,3,4,15]; weapon = 0;
     adaptationGlobal = 0; totalDamage = 0;
-    weaponAdaptation = new Array(14).fill(0);
-    weaponAdaptTurned = new Array(14).fill(false);
+    weaponAdaptation = new Array(16).fill(0);
+    weaponAdaptTurned = new Array(16).fill(false);
     gameOver = false; victory = false; bossDefeated = false; firstEthernatyDefeated = false;
     ethernatySpawned = false; dragonSpawned = false; dragonDefeated = false;
     solarDevourerSpawned = false; solarDevourerDefeated = false;

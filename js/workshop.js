@@ -3,26 +3,39 @@ const BOSS_NAMES = ['Mahoraga', 'Ethernaty', 'Fire Destroyer', 'Solar Devourer',
 const MATERIALS = {
     broken_wheel:'Broken Wheel', handle:'Handle', rainbow_triangle:'Rainbow Triangle',
     energy_sphere:'Energy Sphere', inactive_flame:'Inactive Eternal Flame',
-    shield_piece:'Broken Shield Piece', lightning_fragment:'Lightning Fragment'
+    shield_piece:'Broken Shield Piece', lightning_fragment:'Lightning Fragment',
+    demon_horn:'Demon Horn', cursed_relic:'Cursed Relic'
 };
-const BOSS_DROPS = [['broken_wheel','handle'], ['rainbow_triangle','energy_sphere'], ['inactive_flame'], ['shield_piece'], ['lightning_fragment']];
+const BOSS_DROPS = [
+    ['broken_wheel','handle'],
+    ['rainbow_triangle','energy_sphere'],
+    ['inactive_flame'],
+    ['shield_piece'],
+    ['lightning_fragment','demon_horn','cursed_relic']
+];
 const RECIPES = [
     {id:'adaptation_wheel', station:'accessory', name:'Adaptation Wheel', cost:['broken_wheel'], desc:'Each boss hit reduces subsequent damage by 2%, up to 100%. Resets on boss death.'},
     {id:'eternal_flame', station:'accessory', name:'Eternal Flame', cost:['inactive_flame'], desc:'Your attacks ignite enemies: 50 DPS for 5 seconds. Hits refresh the duration.'},
     {id:'solar_shield', station:'accessory', name:'Solar Shield', cost:['shield_piece'], desc:'Solar dash: longer range and protection when dashing into bosses.'},
+    {id:'demon_talisman', station:'accessory', name:'Demon Talisman', cost:['cursed_relic'], desc:'Reduces all incoming damage by 25%.'},
+    {id:'demon_horn_charm', station:'accessory', name:'Demon Horn Charm', cost:['demon_horn'], desc:'Boosts all damage dealt by 20%.'},
     {id:11, station:'weapon', name:'Handblade', cost:['handle'], desc:'A wide, 260-range melee swing. 300 base damage. No projectiles.'},
     {id:12, station:'weapon', name:'Plasma Crystal', cost:['rainbow_triangle','energy_sphere'], desc:'Hold attack for a rainbow beam: 600 base DPS, consuming exactly 20 mana/second.'},
-    {id:13, station:'weapon', name:'Kumatoke', cost:['lightning_fragment'], desc:'Hold attack to call lightning from the sky at your cursor: 100 DPS.'}
+    {id:13, station:'weapon', name:'Kumatoke', cost:['lightning_fragment'], desc:'Hold attack to call a massive yellow lightning beam from the sky at your cursor: 1000 DPS.'}
 ];
 Object.assign(ARTIFACTS, {
     adaptation_wheel:{name:'Adaptation Wheel', icon:'☸', color:'#e7d491', boss:'Crafting', desc:RECIPES[0].desc},
     eternal_flame:{name:'Eternal Flame', icon:'🔥', color:'#ff8b40', boss:'Crafting', desc:RECIPES[1].desc},
-    solar_shield:{name:'Solar Shield', icon:'🛡', color:'#ffd966', boss:'Crafting', desc:RECIPES[2].desc}
+    solar_shield:{name:'Solar Shield', icon:'🛡', color:'#ffd966', boss:'Crafting', desc:RECIPES[2].desc},
+    demon_talisman:{name:'Demon Talisman', icon:'🧿', color:'#bb55ff', boss:'Crafting', desc:'Reduces all incoming damage by 25%.'},
+    demon_horn_charm:{name:'Demon Horn Charm', icon:'📿', color:'#ff3366', boss:'Crafting', desc:'Boosts all damage dealt by 20%.'}
 });
 weapons.push(
     {name:'Handblade', damage:300, cooldown:650, mana:0, color:'#e7dbc0', category:'melee'},
     {name:'Plasma Crystal', damage:600, cooldown:0, mana:20, color:'#88eeff', category:'magic'},
-    {name:'Kumatoke', damage:100, cooldown:0, mana:0, color:'#b5a3ff', category:'magic'}
+    {name:'Kumatoke', damage:1000, cooldown:0, mana:0, color:'#ffee00', category:'magic'},
+    {name:'Demon Staff', damage:76, cooldown:600, mana:0, color:'#cc44ff', category:'magic'},
+    {name:'Dev Stick', damage:9999999, cooldown:350, mana:0, color:'#ff0055', category:'magic'}
 );
 let killedBosses = new Set(), materials = {}, panelProgression = false, workshopUnlocked = false;
 let workshopMenuOpen = false, workshopTab = 'summon', firstBossKill = false;
@@ -39,6 +52,7 @@ workshopModal.setAttribute('aria-modal','true');
 workshopModal.setAttribute('aria-label','Crafting and boss summoning');
 document.getElementById('ui').appendChild(workshopModal);
 for (let i=11;i<weapons.length;i++){
+    if (document.querySelector && document.querySelector(`.weapon[data-id="${i}"]`)) continue;
     const el = document.createElement('button');
     el.className = 'weapon hidden'; el.dataset.id = i;
     el.innerHTML = `<span class="name">${weapons[i].name}</span><span class="adapt" id="adapt${i}">Crafted</span>`;
@@ -68,9 +82,20 @@ function recordBossKill(index){
     }
     document.getElementById('lootReport').textContent = drops.length ? `Material drops: ${drops.join(', ')}` : `${BOSS_NAMES[index]}: no materials this time (10% each).`;
     refreshWorkshopButtons();
+    updateMobileInteractBtn();
     showMessage(`${BOSS_NAMES[index]} defeated! Use the summon panel to fight again or continue.`);
 }
+function updateMobileInteractBtn(){
+    const btn = document.getElementById('btnMobileInteract');
+    if (!btn) return;
+    const show = panelProgression && (!activeBoss() || workshopUnlocked);
+    btn.style.display = show ? 'flex' : 'none';
+    if (btn.classList && typeof btn.classList.toggle === 'function'){
+        btn.classList.toggle('pulse', !!show);
+    }
+}
 function updateWorkshopHUD(){
+    updateMobileInteractBtn();
     if (!panelProgression || activeBoss()) return;
     document.getElementById('bossName').textContent=workshopUnlocked ? 'CRAFTING SANCTUARY' : 'BOSS DEFEATED · SUMMON PANEL READY';
     document.getElementById('phase').textContent=workshopUnlocked ? 'E near a station · Craft equipment or summon a boss' : 'E · Open summon panel';
@@ -150,7 +175,7 @@ function summonBoss(index){
     document.getElementById('bossName').textContent=BOSS_NAMES[index];
     for (const id of ['bossName','bossBar','bossHealth','phase']) document.getElementById(id).className=['','ethernaty','fire','solar','demon'][index];
     document.getElementById('bossHealth').style.width='100%';
-    updateWeaponUI(); updateWeaponAdaptUI(); return true;
+    updateWeaponUI(); updateWeaponAdaptUI(); updateMobileInteractBtn(); return true;
 }
 function stationPositions(){
     return [{tab:'accessory',label:'Accessory station',x:canvas.width*.27,y:canvas.height*.47},
@@ -212,9 +237,10 @@ function updateCraftedCombat(dt){
     while (channelTick>=100){
         channelTick-=100;
         if (!target || target.hp<=0) continue;
-        const hit=bossHitPoints(target).some(p=>pointSegDist(p.x,p.y,visual.x,visual.y,visual.tx,visual.ty)<p.radius+14);
+        const beamRadius = weapon===13 ? 42 : 14;
+        const hit=bossHitPoints(target).some(p=>pointSegDist(p.x,p.y,visual.x,visual.y,visual.tx,visual.ty)<p.radius+beamRadius);
         if (hit){
-            const damage=weapon===12?applyClassBonus(60,12):10;
+            const damage=weapon===12?applyClassBonus(60,12):applyClassBonus(100,13);
             target.hp-=damage; totalDamage+=damage; igniteTarget(target); applyLifesteal(damage);
             damageNumber(target.x,target.y-30,Math.round(damage),weapons[weapon].color);
         }
@@ -233,8 +259,19 @@ function drawCraftedCombat(){
     if (v.kind==='swing'){
         ctx.strokeStyle='#f0e4c7'; ctx.lineWidth=18; ctx.beginPath();
         ctx.arc(v.x,v.y,250,v.angle-1.2,v.angle+1.2); ctx.stroke();
+    } else if (v.kind==='lightning'){
+        // Kumatoke: 3x bigger yellow lightning beam from the sky
+        ctx.lineWidth=36;
+        ctx.strokeStyle='#ffe600';
+        ctx.beginPath(); ctx.moveTo(v.x,v.y); ctx.lineTo(v.tx,v.ty); ctx.stroke();
+        ctx.lineWidth=18;
+        ctx.strokeStyle='#fff766';
+        ctx.stroke();
+        ctx.lineWidth=6;
+        ctx.strokeStyle='#ffffff';
+        ctx.stroke();
     } else {
-        ctx.lineWidth=v.kind==='plasma'?24:10;
+        ctx.lineWidth=24;
         const gradient=ctx.createLinearGradient(v.x,v.y,v.tx,v.ty);
         ['#ff5d87','#ffc857','#82f8bb','#68cfff','#b89bff'].forEach((c,i)=>gradient.addColorStop(i/4,c));
         ctx.strokeStyle=v.kind==='dash'?'#ffcf62':gradient;

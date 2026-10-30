@@ -1,8 +1,32 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { overflow: hidden; background: #05070b; font-family: "Trebuchet MS", Arial, sans-serif; color: #fff; }
-    canvas { display: block; width: 100vw; height: 100vh; }
-    #ui { position: fixed; inset: 0; pointer-events: none; }
+    html, body {
+        overflow: hidden;
+        background: #05070b;
+        font-family: "Trebuchet MS", Arial, sans-serif;
+        color: #fff;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        overscroll-behavior: none;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+    canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        touch-action: none;
+    }
+    #ui {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+        touch-action: none;
+    }
 
     #bossName {
         position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
@@ -114,25 +138,166 @@
     #winScreen { background: radial-gradient(circle, rgba(140,40,0,.92), rgba(0,0,0,.96)); }
     #winScreen h1 { color: #ffbb55; text-shadow: 0 0 30px #ff6600, 0 0 60px #ff2200; }
 
-    #classScreen { display: flex; background: linear-gradient(180deg, #05030f, #100825); }
-    #classScreen h1 { color: #ffd166; text-shadow: 0 0 30px #ffaa44, 0 0 60px #ff6600; font-size: 44px; margin-bottom: 8px; }
-    #classScreen .subtitle { color: #ccc; font-size: 15px; margin-bottom: 26px; }
-    .classGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; max-width: 1200px; padding: 0 20px; }
-    .classCard {
-        background: rgba(20,25,35,.9); border: 3px solid #555; border-radius: 12px; padding: 18px 14px;
-        text-align: center; cursor: pointer; transition: all .2s; min-width: 210px;
-        display: flex; flex-direction: column; align-items: center; gap: 9px;
+    #classScreen {
+        display: flex;
+        background-color: #0b0914;
+        background-image:
+            radial-gradient(ellipse at top, #1e1b30, #080910 80%),
+            repeating-linear-gradient(0deg, rgba(0,0,0,0.35) 0px, rgba(0,0,0,0.35) 2px, transparent 2px, transparent 4px),
+            repeating-linear-gradient(90deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 2px, transparent 2px, transparent 4px);
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
     }
-    .classCard:hover { transform: translateY(-8px); border-color: #ffd166; box-shadow: 0 0 30px rgba(255,209,102,.5); }
+    #classScreen h1 {
+        color: #ffd166;
+        font-family: 'Courier New', 'Lucida Console', Monaco, monospace;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-shadow: 3px 3px 0 #7e4b00, 5px 5px 0 #000;
+        font-size: clamp(22px, 3.2vw, 38px);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+    }
+    #classScreen .subtitle {
+        color: #b0b4c8;
+        font-family: 'Courier New', 'Lucida Console', Monaco, monospace;
+        font-size: 13px;
+        letter-spacing: 1px;
+        margin-bottom: 22px;
+        text-shadow: 1px 1px 0 #000;
+    }
+    .difficultyControl {
+        text-align: center;
+        color: #c7c6d5;
+        font-size: 13px;
+        font-family: 'Courier New', 'Lucida Console', monospace;
+    }
+    .difficultyControl label {
+        margin-right: 10px;
+        color: #ffe09c;
+        font-weight: bold;
+        text-shadow: 1px 1px 0 #000;
+    }
+    .difficultyControl select {
+        border-radius: 0;
+        border: 3px solid #bba570;
+        background: #141122;
+        color: #fff;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        font-weight: bold;
+        box-shadow: 3px 3px 0 #000, inset -2px -2px 0 #000, inset 2px 2px 0 #4a4130;
+        padding: 5px 10px;
+        image-rendering: pixelated;
+    }
+    .classGrid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        max-width: 1200px;
+        padding: 0 10px;
+    }
+    .classCard {
+        background: #121520;
+        border-radius: 0;
+        border: 4px solid #444b58;
+        box-shadow: inset -4px -4px 0 #080a10, inset 4px 4px 0 #2a3140, 5px 5px 0 #000;
+        padding: 14px 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: none;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+    }
+    .classCard:hover {
+        transform: translate(-3px, -3px);
+        box-shadow: inset -4px -4px 0 #080a10, inset 4px 4px 0 #ffd166, 8px 8px 0 #000;
+        border-color: #ffd166;
+    }
+    .classCard:active {
+        transform: translate(2px, 2px);
+        box-shadow: inset -4px -4px 0 #080a10, inset 4px 4px 0 #2a3140, 2px 2px 0 #000;
+    }
+    .classCard .portrait {
+        border-radius: 0;
+        border: 3px solid #0a0b12;
+        box-shadow: inset -2px -2px 0 #262b3a, inset 2px 2px 0 #000, 0 0 0 1px #444b58;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        max-height: 205px;
+        flex-shrink: 0;
+    }
     .classIcon { font-size: 48px; line-height: 1; }
-    .className { font-size: 21px; font-weight: bold; letter-spacing: 1px; }
-    .classDesc { font-size: 12.5px; color: #aaa; line-height: 1.4; min-height: 56px; }
-    .classBonus { font-size: 12px; color: #88ff88; }
-    .classWeapon { font-size: 12px; color: #ffd166; }
-    .warrior { border-color: #ff6644; } .warrior .className { color: #ff8866; }
-    .mage { border-color: #8844ff; } .mage .className { color: #aa66ff; }
-    .ranger { border-color: #44ccff; } .ranger .className { color: #66ddff; }
-    .summoner { border-color: #ffaa44; } .summoner .className { color: #ffcc66; }
+    .className {
+        font-family: 'Courier New', 'Lucida Console', Monaco, monospace;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-shadow: 2px 2px 0 #000;
+    }
+    .classDesc {
+        font-family: 'Courier New', 'Lucida Console', Monaco, monospace;
+        font-size: 11px;
+        color: #a0a6b8;
+        line-height: 1.35;
+        min-height: 48px;
+        text-shadow: 1px 1px 0 #000;
+    }
+    .classBonus {
+        font-family: 'Courier New', 'Lucida Console', Monaco, monospace;
+        font-size: 11px;
+        font-weight: bold;
+        color: #79f879;
+        text-shadow: 1px 1px 0 #000;
+    }
+    .classWeapon {
+        font-family: 'Courier New', 'Lucida Console', Monaco, monospace;
+        font-size: 11px;
+        font-weight: bold;
+        color: #ffd166;
+        text-shadow: 1px 1px 0 #000;
+    }
+    .warrior {
+        border-color: #e64a19;
+        box-shadow: inset -4px -4px 0 #5f0909, inset 4px 4px 0 #ff8a65, 5px 5px 0 #000;
+    }
+    .warrior .className { color: #ff8a65; }
+    .warrior:hover {
+        border-color: #ff8a65;
+        box-shadow: inset -4px -4px 0 #5f0909, inset 4px 4px 0 #ffccbc, 8px 8px 0 #000;
+    }
+    .mage {
+        border-color: #8e24aa;
+        box-shadow: inset -4px -4px 0 #4a0072, inset 4px 4px 0 #ce93d8, 5px 5px 0 #000;
+    }
+    .mage .className { color: #ce93d8; }
+    .mage:hover {
+        border-color: #ce93d8;
+        box-shadow: inset -4px -4px 0 #4a0072, inset 4px 4px 0 #f3e5f5, 8px 8px 0 #000;
+    }
+    .ranger {
+        border-color: #0288d1;
+        box-shadow: inset -4px -4px 0 #004b73, inset 4px 4px 0 #81d4fa, 5px 5px 0 #000;
+    }
+    .ranger .className { color: #81d4fa; }
+    .ranger:hover {
+        border-color: #81d4fa;
+        box-shadow: inset -4px -4px 0 #004b73, inset 4px 4px 0 #e1f5fe, 8px 8px 0 #000;
+    }
+    .summoner {
+        border-color: #f57c00;
+        box-shadow: inset -4px -4px 0 #873600, inset 4px 4px 0 #ffcc80, 5px 5px 0 #000;
+    }
+    .summoner .className { color: #ffcc80; }
+    .summoner:hover {
+        border-color: #ffcc80;
+        box-shadow: inset -4px -4px 0 #873600, inset 4px 4px 0 #fff3e0, 8px 8px 0 #000;
+    }
 
     #artifactBar {
         position: absolute; left: 20px; top: 142px; display: flex; gap: 6px;
@@ -177,16 +342,13 @@
 .tile-0 {--tile-x:0%;--tile-y:0%} .tile-1 {--tile-x:33.333%;--tile-y:0%} .tile-2 {--tile-x:66.667%;--tile-y:0%} .tile-3 {--tile-x:100%;--tile-y:0%}
 .tile-4 {--tile-x:0%;--tile-y:50%} .tile-5 {--tile-x:33.333%;--tile-y:50%} .tile-6 {--tile-x:66.667%;--tile-y:50%} .tile-7 {--tile-x:100%;--tile-y:50%}
 .tile-8 {--tile-x:0%;--tile-y:100%} .tile-9 {--tile-x:33.333%;--tile-y:100%} .tile-10 {--tile-x:66.667%;--tile-y:100%} .tile-11 {--tile-x:100%;--tile-y:100%}
-#classScreen { overflow:auto; padding:32px 18px; gap:14px; background:radial-gradient(ellipse at top,#242137,#080b13 75%); }
-#classScreen h1 { font-size:clamp(23px,3vw,40px); text-align:center; }
+#classScreen { overflow:auto; padding:32px 18px; gap:14px; }
+#classScreen h1 { text-align:center; }
 #classScreen .subtitle { margin-bottom:0; text-align:center; }
 .classGrid { width:min(1100px,100%); gap:16px; padding:0; }
 .classCard { min-width:0; padding:12px; }
-.classCard .portrait { max-height:205px; flex-shrink:0; }
 .classCard:focus-visible, button:focus-visible, select:focus-visible { outline:3px solid #ffe09c; outline-offset:4px; }
-.difficultyControl { text-align:center; color:#c7c6d5; font-size:13px; }
-.difficultyControl label { margin-right:10px; color:#ffe09c; }
-.difficultyControl select { background:#171c2b; color:#fff; border:1px solid #7e719b; border-radius:6px; padding:9px 12px; font:inherit; }
+.difficultyControl select { background:#171c2b; color:#fff; border:2px solid #bba570; border-radius:0; padding:8px 12px; font-family:monospace; box-shadow:2px 2px 0 #000; image-rendering:pixelated; }
 .difficultyControl p { font-size:12px; margin-top:7px; }
 #runTools { position:absolute; top:16px; right:16px; display:flex; flex-direction:column; align-items:flex-end; gap:6px; pointer-events:auto; font-size:12px; }
 #runTools button { padding:7px 12px; border:1px solid #6d7295; border-radius:6px; color:#e8e8f5; background:#151a2de6; cursor:pointer; }
@@ -202,29 +364,9 @@
 .weapon { flex-shrink:0; }
 #instructions { bottom:73px; max-width:65vw; }
 .overlay { text-align:center; }
-@media(max-width:900px) {
-    #classScreen { justify-content:flex-start; }
-    .classGrid { grid-template-columns:repeat(2,minmax(0,1fr)); max-width:620px; }
-    .bossGrid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    #journalScreen { justify-content:flex-start; }
-    #bossName { top:205px; font-size:18px; max-width:95vw; overflow:hidden; text-overflow:ellipsis; }
-    #bossBar { top:234px; height:18px; }
-    #phase { top:258px; font-size:12px; text-align:center; width:90vw; }
-    #damageCounter { top:185px; right:16px; font-size:12px; }
-    #message { top:285px; font-size:16px; white-space:normal; text-align:center; width:90vw; }
-    #attackWarning { top:325px; font-size:15px; white-space:normal; text-align:center; width:90vw; }
-    #playerHealthBox { width:190px; }
-    #bossWarning .warnTitle { font-size:clamp(24px,6vw,60px); }
-    .overlay h1 { font-size:30px; }
-}
-@media(max-height:700px) and (min-width:901px) {
-    #classScreen { justify-content:flex-start; padding-top:16px; gap:9px; }
-    .classCard .portrait { max-width:125px; }
-    .classDesc { min-height:40px; }
-}
 @media(prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
 
-/* Comfortable combat: stable HUD, no pulsing text or oversized arrival overlays. */
+/* Comfortable combat: stable HUD, clean layout. */
 #ui { text-shadow:none; }
 #bossName, #phase, #message, #attackWarning, #bossWarning .warnTitle,
 .overlay h1, #damageCounter { text-shadow:none !important; letter-spacing:.5px; }
@@ -246,8 +388,9 @@
 #playerHealth { background:#659f8a; }
 #playerMana { background:#638ead; }
 #bossHealth { background:linear-gradient(90deg,#987665,#c29b7b); }
-#bossHealth.ethernaty { background:linear-gradient(90deg,#756994,#a093ba); }
-#bossHealth.fire, #bossHealth.solar { background:linear-gradient(90deg,#a16f4f,#c69c68); }
+#bossHealth.ethernaty { background:linear-gradient(90deg, #ff1744, #ff9100, #ffea00, #00e676, #00b0ff, #d500f9); }
+#bossHealth.fire { background:linear-gradient(90deg, #e65100, #ff9800, #ffb74d); }
+#bossHealth.solar { background:linear-gradient(90deg, #880e4f, #d50000, #ff3d00); }
 #bossHealth.demon { background:linear-gradient(90deg,#8b586c,#b38094); }
 #damageCounter { border-color:#615a48; color:#cbb78b; font-size:13px; }
 #instructions { color:#a4afbf; }
@@ -264,11 +407,234 @@
 .workshopList article { display:flex; justify-content:space-between; align-items:center; gap:18px; padding:16px; border:1px solid #485365; border-radius:8px; background:#131d2b; }
 .workshopList article button { flex-shrink:0; }
 #lootReport { position:absolute; bottom:82px; left:16px; max-width:85vw; color:#e3d1a3; font-size:13px; }
-@media(max-width:900px) {
-    #bossName { top:205px; font-size:16px; }
-    #bossBar { top:234px; width:82vw; }
-    #phase { top:258px; }
-    #message { top:282px; font-size:14px; }
-    #attackWarning { top:310px; font-size:14px; }
-    #bossWarning .warnTitle { font-size:17px; }
+
+
+/* Mobile Touch Controls */
+.mobile-controls {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 45;
+    touch-action: none;
 }
+.joystick-zone {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: clamp(150px, 36vw, 240px);
+    height: clamp(150px, 36vw, 240px);
+    pointer-events: auto;
+    touch-action: none;
+}
+.joystick-base {
+    position: absolute;
+    left: max(18px, env(safe-area-inset-left, 18px));
+    bottom: max(18px, env(safe-area-inset-bottom, 18px));
+    width: 116px;
+    height: 116px;
+    border-radius: 50%;
+    background: rgba(14, 18, 28, 0.62);
+    border: 3px solid rgba(255, 209, 102, 0.4);
+    box-shadow: inset 0 0 18px rgba(0,0,0,0.85), 0 0 12px rgba(255, 209, 102, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+}
+.joystick-stick {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff3b0 5%, #ffd166 35%, #885500 85%, #2a1800 100%);
+    border: 2px solid #fff;
+    box-shadow: 0 0 14px rgba(255, 209, 102, 0.7), inset 0 0 6px rgba(0,0,0,0.8);
+    pointer-events: none;
+    touch-action: none;
+    will-change: transform;
+    transform: translate(0px, 0px);
+}
+.action-buttons {
+    position: absolute;
+    right: max(16px, env(safe-area-inset-right, 16px));
+    bottom: max(16px, env(safe-area-inset-bottom, 16px));
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    pointer-events: none;
+    touch-action: none;
+}
+.mobile-btn {
+    pointer-events: auto;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    border: 3px solid #888;
+    background: rgba(18, 24, 38, 0.82);
+    color: #fff;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.65), inset 0 0 10px rgba(0,0,0,0.5);
+    font-family: inherit;
+    outline: none;
+}
+.mobile-btn:active, .mobile-btn.active {
+    transform: scale(0.92);
+}
+.mobile-btn .btn-icon {
+    font-size: 21px;
+    line-height: 1;
+    pointer-events: none;
+}
+.mobile-btn .btn-lbl {
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    font-family: 'Courier New', monospace;
+    margin-top: 2px;
+    pointer-events: none;
+}
+.btn-dash {
+    width: 64px;
+    height: 64px;
+    border-color: #44ddff;
+    background: radial-gradient(circle at 40% 40%, rgba(30, 80, 120, 0.9), rgba(10, 22, 38, 0.95));
+    box-shadow: 0 0 16px rgba(68, 221, 255, 0.4);
+}
+.btn-dash .btn-lbl { color: #88eeff; }
+.btn-dash.cooldown {
+    opacity: 0.45;
+    border-color: #557788;
+}
+.btn-attack {
+    width: 58px;
+    height: 58px;
+    border-color: #ff3355;
+    background: radial-gradient(circle at 40% 40%, rgba(120, 25, 45, 0.9), rgba(35, 10, 18, 0.95));
+    box-shadow: 0 0 16px rgba(255, 51, 85, 0.4);
+}
+.btn-attack .btn-lbl { color: #ff99aa; }
+.mobile-aux-row {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    pointer-events: none;
+}
+.btn-aux {
+    width: 44px;
+    height: 44px;
+}
+.btn-heal {
+    border-color: #44ff88;
+    background: rgba(18, 50, 30, 0.85);
+    box-shadow: 0 0 10px rgba(68, 255, 136, 0.35);
+}
+.btn-heal.cooldown {
+    opacity: 0.45;
+    border-color: #447755;
+}
+.btn-weapon {
+    border-color: #ffd166;
+    background: rgba(50, 40, 18, 0.85);
+    box-shadow: 0 0 10px rgba(255, 209, 102, 0.35);
+}
+.btn-interact {
+    border-color: #c7a2ff;
+    background: rgba(42, 22, 60, 0.85);
+    box-shadow: 0 0 10px rgba(199, 162, 255, 0.35);
+}
+.btn-interact.pulse {
+    animation: mobileInteractPulse 0.9s infinite alternate;
+}
+@keyframes mobileInteractPulse {
+    from { transform: scale(1); box-shadow: 0 0 8px #c7a2ff; }
+    to { transform: scale(1.12); box-shadow: 0 0 18px #ffd166; border-color: #ffd166; }
+}
+
+/* Responsive Mobile & Tablet HUD optimizations */
+@media(max-width:960px), (max-height:560px), (pointer: coarse) {
+    #bossName { top:8px; font-size:clamp(13px,3.2vw,17px); letter-spacing:1px; max-width:55vw; overflow:hidden; text-overflow:ellipsis; text-align:center; }
+    #bossBar { top:28px; height:12px; width:min(440px,50vw); }
+    #phase { top:44px; font-size:10px; width:90vw; text-align:center; }
+    #message { top:62px; font-size:clamp(13px,3vw,16px); width:90vw; text-align:center; }
+    #attackWarning { top:84px; font-size:clamp(12px,2.8vw,15px); width:90vw; text-align:center; }
+    
+    #playerHealthBox { top:8px; left:8px; width:clamp(125px,26vw,175px); }
+    #playerHealthBg { height:14px; }
+    #playerManaBg { height:8px; margin-top:3px; }
+    #stats { font-size:9.5px; margin-top:2px; }
+    #classIndicator { top:54px; left:8px; font-size:10px; padding:2px 6px; }
+    #artifactBar { top:78px; left:8px; }
+    .artifactSlotMini { width:26px; height:26px; font-size:14px; }
+    #artifactHint { display:none; }
+
+    #runTools { top:8px; right:8px; flex-direction:row; gap:4px; }
+    #runTools button { padding:5px 8px; font-size:11px; }
+    .visualControl { display:none; }
+    #damageCounter { top:36px; right:8px; font-size:10.5px; padding:2px 6px; }
+
+    #weapons { bottom:max(8px, env(safe-area-inset-bottom, 8px)); max-width:min(520px, 58vw); padding:0 4px; }
+    .weapon { width:58px; padding:3px 2px; font-size:8px; }
+    .weapon .name { font-size:8px; }
+    .weapon .adapt { font-size:7px; }
+
+    #instructions { display:none; }
+    #workshopControls { left:8px; bottom:max(130px, 20vh); max-width:280px; }
+    #workshopControls button { padding:6px 10px; font-size:11px; }
+    #lootReport { left:8px; bottom:max(105px, 16vh); font-size:11px; }
+
+    /* Modals on mobile */
+    .overlay { padding:14px 10px; }
+    .overlay h1 { font-size:clamp(20px,5vw,28px); }
+    #classScreen { padding:14px 10px; justify-content:flex-start; }
+    .classGrid { width:100%; max-width:540px; gap:8px; }
+    .classCard { padding:8px 6px; gap:5px; }
+    .classCard .portrait { max-height:120px; }
+    .className { font-size:14px; letter-spacing:1px; }
+    .classDesc { font-size:10px; min-height:36px; }
+    .classBonus, .classWeapon { font-size:9.5px; }
+
+    .bossGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .bossGrid article { padding:8px; }
+    .bossGrid h2 { font-size:13px; margin:4px 0; }
+    .bossGrid p { font-size:11px; }
+
+    #artifactModal { padding:14px 10px; }
+    #artifactSlotsRow { gap:6px; margin:6px 0 16px; }
+    .artifactSlotBig { width:46px; height:46px; font-size:20px; }
+    .artifactCard { width:135px; padding:8px 6px; gap:4px; }
+    .artifactCard .aIcon { font-size:24px; }
+    .artifactCard .aName { font-size:12px; }
+    .artifactCard .aDesc { font-size:9.5px; }
+
+    .workshopWindow { padding:0 4px; }
+    .workshopList article { padding:10px; gap:10px; }
+}
+
+@media(max-width:540px) {
+    .classGrid { grid-template-columns:1fr; max-width:320px; }
+    .classCard .portrait { max-height:100px; max-width:140px; }
+    #bossBar { width:min(320px,46vw); }
+    #weapons { max-width:52vw; }
+}
+
+@media(max-height:500px) {
+    #classScreen { padding:8px; gap:4px; }
+    .classGrid { grid-template-columns:repeat(4,1fr); gap:6px; }
+    .classCard { padding:5px 4px; gap:3px; }
+    .classCard .portrait { max-height:75px; }
+    .className { font-size:12px; }
+    .classDesc { min-height:28px; font-size:9px; }
+    #weapons { bottom:4px; }
+    .joystick-base { width:96px; height:96px; }
+    .joystick-stick { width:40px; height:40px; }
+    .btn-dash { width:52px; height:52px; }
+    .btn-attack { width:48px; height:48px; }
+    .btn-aux { width:38px; height:38px; }
+}
+

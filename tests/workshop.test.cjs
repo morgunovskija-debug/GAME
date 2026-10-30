@@ -61,7 +61,7 @@ test('adaptation reduces each subsequent hit by 2% and resets on kill',()=>{
     run('recordBossKill(0)');
     assert.equal(run('playerAdaptation'),0);
 });
-test('plasma consumes 20 mana/sec; lightning 100 DPS; flame 50 DPS for five seconds',()=>{
+test('plasma consumes 20 mana/sec; lightning 1000 DPS; flame 50 DPS for five seconds',()=>{
     const run=game();
     run('bossDefeated=true; twoFacedDemon=createTwoFacedDemon(); twoFacedDemon.x=500; twoFacedDemon.y=300; player.x=100; player.y=300; mouse.x=500; mouse.y=300; mouse.down=true; weapon=12; player.mana=100; inventory.push(12)');
     const hp=run('twoFacedDemon.hp');
@@ -71,7 +71,7 @@ test('plasma consumes 20 mana/sec; lightning 100 DPS; flame 50 DPS for five seco
     run('weapon=13; channelTick=0');
     const before=run('twoFacedDemon.hp');
     run('for(let i=0;i<10;i++) updateCraftedCombat(100)');
-    assert.equal(run('twoFacedDemon.hp'),before-100);
+    assert.equal(run('twoFacedDemon.hp'),before-1000);
     run("mouse.down=false; equippedArtifacts[0]='eternal_flame'; igniteTarget(twoFacedDemon)");
     const burn=run('twoFacedDemon.hp');
     run('for(let i=0;i<60;i++) updateCraftedCombat(100)');
@@ -89,5 +89,5 @@ test('handblade swings without projectiles; solar dash protects; menus pause com
     run('workshopMenuOpen=true; player.invincible=0');
     assert.equal(run('hurtPlayer(100)'),false);
     run('restart()');
-    assert.equal(run('killedBosses.size===0 && !workshopUnlocked && !workshopMenuOpen && inventory.length===5'),true);
+    assert.equal(run('killedBosses.size===0 && !workshopUnlocked && !workshopMenuOpen && inventory.length===6'),true);
 });
