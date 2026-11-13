@@ -137,6 +137,9 @@
     #deathScreen h1 { color: #ff3333; }
     #winScreen { background: radial-gradient(circle, rgba(140,40,0,.92), rgba(0,0,0,.96)); }
     #winScreen h1 { color: #ffbb55; text-shadow: 0 0 30px #ff6600, 0 0 60px #ff2200; }
+    #idolWinScreen { background: radial-gradient(circle, rgba(120,95,20,.92), rgba(0,0,0,.96)); }
+    #idolWinScreen h1 { color: #ffe08a; }
+    #idolWinScreen .byline { font-style: italic; opacity: .7; }
 
     #classScreen {
         display: flex;
@@ -166,29 +169,11 @@
         margin-bottom: 22px;
         text-shadow: 1px 1px 0 #000;
     }
-    .difficultyControl {
+    .runRecord {
         text-align: center;
         color: #c7c6d5;
         font-size: 13px;
         font-family: 'Courier New', 'Lucida Console', monospace;
-    }
-    .difficultyControl label {
-        margin-right: 10px;
-        color: #ffe09c;
-        font-weight: bold;
-        text-shadow: 1px 1px 0 #000;
-    }
-    .difficultyControl select {
-        border-radius: 0;
-        border: 3px solid #bba570;
-        background: #141122;
-        color: #fff;
-        font-family: 'Courier New', monospace;
-        font-size: 13px;
-        font-weight: bold;
-        box-shadow: 3px 3px 0 #000, inset -2px -2px 0 #000, inset 2px 2px 0 #4a4130;
-        padding: 5px 10px;
-        image-rendering: pixelated;
     }
     .classGrid {
         display: grid;
@@ -348,14 +333,13 @@
 .classGrid { width:min(1100px,100%); gap:16px; padding:0; }
 .classCard { min-width:0; padding:12px; }
 .classCard:focus-visible, button:focus-visible, select:focus-visible { outline:3px solid #ffe09c; outline-offset:4px; }
-.difficultyControl select { background:#171c2b; color:#fff; border:2px solid #bba570; border-radius:0; padding:8px 12px; font-family:monospace; box-shadow:2px 2px 0 #000; image-rendering:pixelated; }
-.difficultyControl p { font-size:12px; margin-top:7px; }
+.runRecord p { font-size:12px; margin-top:7px; }
 #runTools { position:absolute; top:16px; right:16px; display:flex; flex-direction:column; align-items:flex-end; gap:6px; pointer-events:auto; font-size:12px; }
 #runTools button { padding:7px 12px; border:1px solid #6d7295; border-radius:6px; color:#e8e8f5; background:#151a2de6; cursor:pointer; }
 #runTools button:disabled { opacity:.5; cursor:default; }
 #pauseScreen, #journalScreen { z-index:55; }
 #journalScreen { overflow:auto; padding:30px; }
-.bossGrid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:16px; max-width:1100px; }
+.bossGrid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; max-width:1100px; }
 .bossGrid article { background:#181c2b; border:1px solid #605275; padding:12px; border-radius:12px; }
 .bossGrid h2 { font-size:16px; margin:10px 0; color:#ffd166; }
 .bossGrid p { font-size:13px; line-height:1.5; }
@@ -383,6 +367,7 @@
 #bossWarning .warnSub { font-size:11px; letter-spacing:2px; color:#b0b9c5; text-shadow:none; }
 .visualControl { display:flex; align-items:center; gap:7px; color:#b4bdcc; }
 .visualControl select { background:#151c29; color:#dce3ec; padding:5px; border:1px solid #566174; border-radius:5px; font:inherit; }
+.musicControl input { width:90px; accent-color:#b8a2ff; cursor:pointer; }
 #runTools button { border-color:#455366; }
 #playerHealthBg, #playerManaBg { border:1px solid #586174; border-radius:4px; overflow:hidden; }
 #playerHealth { background:#659f8a; }
@@ -398,8 +383,9 @@
 #workshopControls button, #workshopModal button { padding:9px 13px; color:#e3e9ef; background:#202c3b; border:1px solid #b29c70; border-radius:6px; cursor:pointer; font:inherit; }
 #workshopModal button:disabled { opacity:.45; cursor:default; }
 #workshopModal button:focus-visible, #workshopControls button:focus-visible { outline:2px solid #a8dcff; outline-offset:3px; }
-#workshopModal { z-index:150; overflow:auto; padding:24px; pointer-events:auto; background:#080e18ed; }
-.workshopWindow { width:min(800px,100%); margin:auto; text-align:left; }
+#workshopModal { z-index:150; overflow-x:hidden; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-y; justify-content:flex-start; padding:24px; pointer-events:auto; background:#080e18ed; }
+.workshopWindow { width:min(800px,100%); flex-shrink:0; margin:0 auto; padding-bottom:24px; text-align:left; touch-action:pan-y; }
+#workshopModal .workshopList, #workshopModal article { touch-action:pan-y; }
 #workshopModal h1 { font-size:26px; margin:18px 0; }
 #workshopModal p { font-size:14px; color:#bcc9d9; line-height:1.6; }
 .closeWorkshop { float:right; }
@@ -638,3 +624,65 @@
     .btn-aux { width:38px; height:38px; }
 }
 
+
+/* Abyss expansion: hard bosses, locations and codex. */
+#bossName.moon { color:#cfe9ff; } #bossName.frost { color:#dff6ff; } #bossName.clock { color:#f2d39a; }
+#phase.moon { color:#9fd8ea; } #phase.frost { color:#bfe3f2; } #phase.clock { color:#e2bd7e; }
+#message.moon { color:#cfe9ff; } #message.frost { color:#e3f6ff; } #message.clock { color:#f2d39a; }
+#bossBar.moon { border-color:#6fa8c8; } #bossBar.frost { border-color:#9fd3ea; } #bossBar.clock { border-color:#b8904f; }
+#bossHealth.moon { background:linear-gradient(90deg,#1f6f86,#7fd8e8,#e4f2ff); }
+#bossHealth.frost { background:linear-gradient(90deg,#3d6f95,#8fd0ea,#eefaff); }
+#bossHealth.clock { background:linear-gradient(90deg,#6b4520,#c9a45c,#f2d39a); }
+#journalScreen .subtitle { font-size:13px; color:#b4bdcc; margin-bottom:14px; }
+.bossGrid .place { color:#c9d6e6; font-size:12px; margin:2px 0 6px; }
+.bossGrid .lore { color:#d6d2c4; font-style:italic; }
+.bossGrid .tip { color:#9fb3c8; margin-top:6px; }
+.hardBadge { margin-left:8px; padding:1px 6px; border:1px solid #c96a6a; border-radius:4px; font-size:10px; color:#ffb3b3; vertical-align:middle; }
+.emblem { background-image:none; display:flex; align-items:center; justify-content:center; font-size:64px; }
+.emblem-moon { background:radial-gradient(circle at 50% 42%, #071a30 26%, #dfeaff 27%, #8fa9cc 38%, #0c2140 40%, #040a1c 75%); }
+.emblem-moon::after { content:'🌙'; font-size:0; }
+.emblem-frost { background:linear-gradient(180deg,#0a1730,#1d3b5c 55%,#bfe3f2); }
+.emblem-frost::after { content:'❄'; color:#e8fbff; }
+.emblem-clock { background:radial-gradient(circle, #fff4d6 0 34%, #8a6a2e 35% 39%, #3f2427 40%, #170d1c 80%); }
+.emblem-clock::after { content:'⏳'; font-size:44px; }
+.summonLocation { color:#9fb3c8; font-size:12px; margin-top:4px; }
+@media (max-width: 900px) { .bossGrid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+#bossName.glitch { color:#f2ecff; } #phase.glitch { color:#c9b6ff; } #message.glitch { color:#e2d6ff; }
+#bossBar.glitch { border-color:#b63cff; }
+#bossHealth.glitch { background:linear-gradient(90deg,#5a1fb8,#b63cff,#00f0ff); }
+.emblem-glitch { background:repeating-linear-gradient(0deg, #07050c 0 6px, #120726 6px 9px); }
+.emblem-glitch::after { content:'▪ ▪'; color:#ffffff; font-size:40px; letter-spacing:6px; text-shadow:-3px 0 #00f0ff, 3px 0 #b63cff; }
+
+/* Mythic trials: Kaelthar, Nyxara and The Architect. */
+#bossName.eclipse { color:#ffd9a0; } #phase.eclipse { color:#e8a860; } #message.eclipse { color:#ffd9a0; }
+#bossBar.eclipse { border-color:#c8782f; }
+#bossHealth.eclipse { background:linear-gradient(90deg,#2a0c14,#8a2b12,#ffb347,#fff0c8); }
+#bossName.storm { color:#e6f6ff; } #phase.storm { color:#a9dcff; } #message.storm { color:#e6f6ff; }
+#bossBar.storm { border-color:#8fd3ff; }
+#bossHealth.storm { background:linear-gradient(90deg,#1d3b6e,#5fa8e8,#fff27a); }
+#bossName.architect { color:#fff1c8; } #phase.architect { color:#e6c27a; } #message.architect { color:#fff1c8; }
+#bossBar.architect { border-color:#d9b25a; }
+#bossHealth.architect { background:linear-gradient(90deg,#1b2558,#6f86d8,#ffd98a,#fffaf0); }
+.mythBadge { margin-left:8px; padding:1px 6px; border:1px solid #d9b25a; border-radius:4px; font-size:10px; color:#ffe7a8; vertical-align:middle; }
+.emblem-eclipse { background:radial-gradient(circle at 50% 45%, #07040a 0 24%, #ffe6b0 25% 27%, #ff9a3d 30%, rgba(138,43,18,.9) 46%, #1a0508 75%); }
+.emblem-storm { background:radial-gradient(circle at 50% 40%, #fff9c9 0 5%, #8fd3ff 14%, #1d2f4d 50%, #0b1424 80%); }
+.emblem-storm::after { content:'⚡'; color:#fff27a; font-size:48px; }
+.emblem-architect { background:repeating-linear-gradient(0deg, rgba(159,184,255,.18) 0 1px, transparent 1px 16px), repeating-linear-gradient(90deg, rgba(159,184,255,.18) 0 1px, transparent 1px 16px), radial-gradient(circle, #1a2a6a, #0a1030 75%); }
+.emblem-architect::after { content:'📜'; font-size:44px; }
+#bossName.god { color:#fff6d8; text-shadow:0 0 12px rgba(255,214,107,.8); } #phase.god { color:#ffd66b; } #message.god { color:#fff6d8; }
+#bossBar.god { border-color:#ffd66b; box-shadow:0 0 14px rgba(255,214,107,.45); }
+#bossHealth.god { background:linear-gradient(90deg,#2a0f3a,#b8860b,#ffd66b,#fffaf0,#ffd66b); }
+.godBadge { margin-left:8px; padding:1px 6px; border:1px solid #ffd66b; border-radius:4px; font-size:10px; color:#fff6d8; vertical-align:middle; box-shadow:0 0 8px rgba(255,214,107,.5); }
+.emblem-god { background:radial-gradient(circle at 50% 44%, #08050f 0 13%, #fff4cc 14% 16%, #08050f 17% 24%, #ffd66b 25% 27%, rgba(255,214,107,.25) 30%, #3a2a5a 55%, #0b0a22 80%); }
+.emblem-god::after { content:'👁'; font-size:30px; filter:drop-shadow(0 0 6px #ffd66b); }
+/* Tutorial panel: sits where the boss bar normally is. */
+#tutorial { position:absolute; top:14px; left:50%; transform:translateX(-50%); width:min(560px,90vw); padding:12px 18px 14px; border:1px solid #ffd66b; border-radius:10px; background:#141a28f0; color:#eef2f8; pointer-events:auto; z-index:5; box-shadow:0 0 18px rgba(255,214,107,.25); text-align:left; }
+#tutorial .tutHead { display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:bold; color:#ffd66b; letter-spacing:.5px; }
+#tutorialDots { color:#ffd66b; font-size:12px; letter-spacing:2px; }
+#tutorialText { margin:8px 0 10px; font-size:15px; line-height:1.4; }
+#tutorialSkip { padding:6px 12px; border:1px solid #6d7295; border-radius:6px; color:#e8e8f5; background:#22283e; cursor:pointer; font-size:12px; }
+#tutorialSkip:hover { border-color:#ffd66b; }
+.tutorialOption { display:inline-flex; align-items:center; gap:8px; margin-top:6px; font-size:14px; color:#dfe6ef; cursor:pointer; }
+.tutorialOption input { width:16px; height:16px; cursor:pointer; }
+@media (max-width: 700px){ #tutorialText { font-size:13px; } #tutorial { top:8px; padding:10px 12px; } }

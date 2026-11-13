@@ -1,24 +1,21 @@
 // Run-local progression, recipes and crafted equipment.
-const BOSS_NAMES = ['Mahoraga', 'Ethernaty', 'Fire Destroyer', 'Solar Devourer', 'The Two-Faced Demon'];
+const BOSS_NAMES = ['The King of Adaptation', 'Ethernaty', 'Fire Destroyer', 'Solar Devourer', 'The Two-Faced Demon'];
 const MATERIALS = {
     broken_wheel:'Broken Wheel', handle:'Handle', rainbow_triangle:'Rainbow Triangle',
     energy_sphere:'Energy Sphere', inactive_flame:'Inactive Eternal Flame',
-    shield_piece:'Broken Shield Piece', lightning_fragment:'Lightning Fragment',
-    demon_horn:'Demon Horn', cursed_relic:'Cursed Relic'
+    shield_piece:'Broken Shield Piece', lightning_fragment:'Lightning Fragment'
 };
 const BOSS_DROPS = [
     ['broken_wheel','handle'],
     ['rainbow_triangle','energy_sphere'],
     ['inactive_flame'],
     ['shield_piece'],
-    ['lightning_fragment','demon_horn','cursed_relic']
+    ['lightning_fragment']
 ];
 const RECIPES = [
     {id:'adaptation_wheel', station:'accessory', name:'Adaptation Wheel', cost:['broken_wheel'], desc:'Each boss hit reduces subsequent damage by 2%, up to 100%. Resets on boss death.'},
     {id:'eternal_flame', station:'accessory', name:'Eternal Flame', cost:['inactive_flame'], desc:'Your attacks ignite enemies: 50 DPS for 5 seconds. Hits refresh the duration.'},
     {id:'solar_shield', station:'accessory', name:'Solar Shield', cost:['shield_piece'], desc:'Solar dash: longer range and protection when dashing into bosses.'},
-    {id:'demon_talisman', station:'accessory', name:'Demon Talisman', cost:['cursed_relic'], desc:'Reduces all incoming damage by 25%.'},
-    {id:'demon_horn_charm', station:'accessory', name:'Demon Horn Charm', cost:['demon_horn'], desc:'Boosts all damage dealt by 20%.'},
     {id:11, station:'weapon', name:'Handblade', cost:['handle'], desc:'A wide, 260-range melee swing. 300 base damage. No projectiles.'},
     {id:12, station:'weapon', name:'Plasma Crystal', cost:['rainbow_triangle','energy_sphere'], desc:'Hold attack for a rainbow beam: 600 base DPS, consuming exactly 20 mana/second.'},
     {id:13, station:'weapon', name:'Kumatoke', cost:['lightning_fragment'], desc:'Hold attack to call a massive yellow lightning beam from the sky at your cursor: 1000 DPS.'}
@@ -26,15 +23,13 @@ const RECIPES = [
 Object.assign(ARTIFACTS, {
     adaptation_wheel:{name:'Adaptation Wheel', icon:'☸', color:'#e7d491', boss:'Crafting', desc:RECIPES[0].desc},
     eternal_flame:{name:'Eternal Flame', icon:'🔥', color:'#ff8b40', boss:'Crafting', desc:RECIPES[1].desc},
-    solar_shield:{name:'Solar Shield', icon:'🛡', color:'#ffd966', boss:'Crafting', desc:RECIPES[2].desc},
-    demon_talisman:{name:'Demon Talisman', icon:'🧿', color:'#bb55ff', boss:'Crafting', desc:'Reduces all incoming damage by 25%.'},
-    demon_horn_charm:{name:'Demon Horn Charm', icon:'📿', color:'#ff3366', boss:'Crafting', desc:'Boosts all damage dealt by 20%.'}
+    solar_shield:{name:'Solar Shield', icon:'🛡', color:'#ffd966', boss:'Crafting', desc:RECIPES[2].desc}
 });
 weapons.push(
     {name:'Handblade', damage:300, cooldown:650, mana:0, color:'#e7dbc0', category:'melee'},
     {name:'Plasma Crystal', damage:600, cooldown:0, mana:20, color:'#88eeff', category:'magic'},
     {name:'Kumatoke', damage:1000, cooldown:0, mana:0, color:'#ffee00', category:'magic'},
-    {name:'Demon Staff', damage:76, cooldown:600, mana:0, color:'#cc44ff', category:'magic'},
+    {name:'Demon Staff', damage:240, cooldown:600, mana:0, color:'#cc44ff', category:'magic'},
     {name:'Dev Stick', damage:9999999, cooldown:350, mana:0, color:'#ff0055', category:'magic'}
 );
 let killedBosses = new Set(), materials = {}, panelProgression = false, workshopUnlocked = false;
@@ -72,15 +67,17 @@ function clearArena(){
     document.getElementById('bossWarning').style.display='none';
     document.getElementById('attackWarning').style.opacity=0;
 }
+// Materials from the bosses after The Two-Faced Demon (index 5+) drop at 50%; the first five bosses drop at 10%.
+function dropChance(index){ return index >= 5 ? .5 : .1; }
 function recordBossKill(index){
     firstBossKill = !killedBosses.has(index);
     killedBosses.add(index); panelProgression=true; playerAdaptation=0;
     clearArena();
     const drops=[];
-    for (const id of BOSS_DROPS[index]) if (Math.random() < .1){
+    for (const id of BOSS_DROPS[index]) if (Math.random() < dropChance(index)){
         materials[id]=(materials[id] || 0)+1; drops.push(MATERIALS[id]);
     }
-    document.getElementById('lootReport').textContent = drops.length ? `Material drops: ${drops.join(', ')}` : `${BOSS_NAMES[index]}: no materials this time (10% each).`;
+    document.getElementById('lootReport').textContent = drops.length ? `Material drops: ${drops.join(', ')}` : `${BOSS_NAMES[index]}: no materials this time (${Math.round(dropChance(index)*100)}% each).`;
     refreshWorkshopButtons();
     updateMobileInteractBtn();
     showMessage(`${BOSS_NAMES[index]} defeated! Use the summon panel to fight again or continue.`);
@@ -135,13 +132,13 @@ function craftItem(id){
     renderWorkshop(); return true;
 }
 function renderWorkshop(){
-    workshopModal.innerHTML=`<div class="workshopWindow"><button class="closeWorkshop" type="button">Close · Esc</button><h1>${workshopTab==='summon' ? 'Boss summon panel' : workshopTab==='accessory' ? 'Accessory crafting station' : 'Weapon crafting station'}</h1><p>Materials: ${Object.entries(MATERIALS).map(([id,name])=>`${name}: ${materials[id]||0}`).join(' · ')}</p><div class="workshopList"></div><p>Each material rolls independently at 10% per kill. Accessories use your five artifact slots (I).</p></div>`;
+    workshopModal.innerHTML=`<div class="workshopWindow"><button class="closeWorkshop" type="button">Close · Esc</button><h1>${workshopTab==='summon' ? 'Boss summon panel' : workshopTab==='accessory' ? 'Accessory crafting station' : 'Weapon crafting station'}</h1><p>Materials: ${Object.entries(MATERIALS).map(([id,name])=>`${name}: ${materials[id]||0}`).join(' · ')}</p><div class="workshopList"></div><p>Each material rolls independently per kill: 10% from the first five bosses, 50% from Selene Vey onward. Accessories use your five artifact slots (I).</p></div>`;
     workshopModal.querySelector('button').onclick=closeWorkshop;
     const list=workshopModal.querySelector('.workshopList');
     if (workshopTab==='summon') BOSS_NAMES.forEach((name,index)=>{
         const unlocked=index===0 || killedBosses.has(index-1);
         const row=document.createElement('article');
-        row.innerHTML=`<div><strong>${name}</strong><p>${killedBosses.has(index)?'Defeated · Repeatable':unlocked?'Available':`Locked · Defeat ${BOSS_NAMES[index-1]}`}<br>Drops: ${BOSS_DROPS[index].map(id=>`${MATERIALS[id]} (10%)`).join(', ')}</p></div>`;
+        row.innerHTML=`<div><strong>${name}</strong><p>${killedBosses.has(index)?'Defeated · Repeatable':unlocked?'Available':`Locked · Defeat ${BOSS_NAMES[index-1]}`}<br>Drops: ${BOSS_DROPS[index].map(id=>`${MATERIALS[id]} (${Math.round(dropChance(index)*100)}%)`).join(', ')}</p></div>`;
         const button=document.createElement('button'); button.textContent='Summon'; button.disabled=!unlocked || !!activeBoss();
         button.onclick=()=>summonBoss(index); row.appendChild(button); list.appendChild(row);
     });
@@ -241,7 +238,7 @@ function updateCraftedCombat(dt){
         const hit=bossHitPoints(target).some(p=>pointSegDist(p.x,p.y,visual.x,visual.y,visual.tx,visual.ty)<p.radius+beamRadius);
         if (hit){
             const damage=weapon===12?applyClassBonus(60,12):applyClassBonus(100,13);
-            target.hp-=damage; totalDamage+=damage; igniteTarget(target); applyLifesteal(damage);
+            target.hp-=damage; totalDamage+=damage; igniteTarget(target);
             damageNumber(target.x,target.y-30,Math.round(damage),weapons[weapon].color);
         }
     }

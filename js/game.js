@@ -1,6 +1,6 @@
 
 // ================================================================
-//  БАЗА
+//  CORE
 // ================================================================
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -52,23 +52,19 @@ let currentClass = null;
 let classBonus = { damageMelee:1, damageMagic:1, damageRanged:1, damageAll:1, speedMult:1, manaRegenMult:1, hpBonus:0, manaBonus:0 };
 
 // ================================================================
-//  АРТЕФАКТЫ БОССОВ
+//  BOSS ARTIFACTS
 // ================================================================
 const ARTIFACTS = {
-    mahoraga_fang: { name:"Клык Махораги", icon:"🦴", color:"#dedede", boss:"Махорага",
-        desc:"Оружие адаптируется к Махораге вдвое медленнее — сопротивление растёт слабее." },
-    ethernaty_core: { name:"Ядро ETHERNATY", icon:"🔮", color:"#cc88ff", boss:"ETHERNATY",
-        desc:"Рывок перезаряжается на 40% быстрее, атаки тратят на 20% меньше маны." },
-    dragon_heart: { name:"Сердце Дракона", icon:"❤️‍🔥", color:"#ff6622", boss:"FIRE DESTROYER",
-        desc:"Похищает 8% нанесённого урона как HP, урон от огня снижен на 25%." },
-    solar_core: { name:"Ядро Солнца", icon:"☀️", color:"#ffcc33", boss:"SOLAR DEVOURER",
-        desc:"Контактный урон от SOLAR DEVOURER снижен на 20%, пассивная регенерация HP ускорена втрое." },
-    demon_core: { name:"Проклятое Ядро", icon:"👹", color:"#ff2255", boss:"THE TWO-FACED DEMON",
-        desc:"Весь наносимый урон увеличен на 15%, урон от THE TWO-FACED DEMON снижен на 20%." },
-    demon_talisman: { name:"Талисман Демона", icon:"🧿", color:"#bb55ff", boss:"THE TWO-FACED DEMON",
-        desc:"Весь получаемый урон снижен на 25%." },
-    demon_horn_charm: { name:"Амулет Рога Демона", icon:"📿", color:"#ff3366", boss:"THE TWO-FACED DEMON",
-        desc:"Весь наносимый урон увеличен на 20%." }
+    mahoraga_fang: { name:"Fang of the King", icon:"🦴", color:"#dedede", boss:"The King of Adaptation",
+        desc:"The King of Adaptation adapts to your weapons half as fast, so its resistance grows more slowly." },
+    ethernaty_core: { name:"Ethernaty Core", icon:"🔮", color:"#cc88ff", boss:"ETHERNATY",
+        desc:"Dash recharges 40% faster and attacks cost 20% less mana." },
+    dragon_heart: { name:"Dragon Heart", icon:"❤️‍🔥", color:"#ff6622", boss:"FIRE DESTROYER",
+        desc:"Fire damage taken is reduced by 25%." },
+    solar_core: { name:"Solar Core", icon:"☀️", color:"#ffcc33", boss:"SOLAR DEVOURER",
+        desc:"Solar Devourer contact damage reduced by 20%. Passive HP regeneration is tripled." },
+    demon_core: { name:"Cursed Core", icon:"👹", color:"#ff2255", boss:"THE TWO-FACED DEMON",
+        desc:"All damage dealt increased by 15%. Damage from the Two-Faced Demon reduced by 20%." }
 };
 const ARTIFACT_SLOT_COUNT = 5;
 let ownedArtifacts = [];
@@ -81,7 +77,7 @@ function grantArtifact(id, x, y){
     ownedArtifacts.push(id);
     const idx = equippedArtifacts.indexOf(null);
     if (idx !== -1) equippedArtifacts[idx] = id;
-    showMessage(`🎖 Артефакт получен: ${ARTIFACTS[id].name}`);
+    showMessage(`🎖 Artifact obtained: ${ARTIFACTS[id].name}`);
     particle(x, y, ARTIFACTS[id].color, 34, 11, 1);
     updateArtifactBar();
 }
@@ -90,7 +86,7 @@ function toggleEquip(id){
     if (at !== -1){ equippedArtifacts[at] = null; }
     else {
         const idx = equippedArtifacts.indexOf(null);
-        if (idx === -1){ showMessage("⚠ Все слоты заняты! Сначала снимите артефакт."); return; }
+        if (idx === -1){ showMessage("⚠ All slots are full! Unequip an artifact first."); return; }
         equippedArtifacts[idx] = id;
     }
     renderArtifactModal(); updateArtifactBar();
@@ -140,8 +136,8 @@ function renderArtifactModal(){
         const card = document.createElement("div");
         card.className = "artifactCard" + (equipped ? " equipped" : "");
         card.innerHTML = `<div class="aIcon">${a.icon}</div><div class="aName">${a.name}</div>
-            <div class="aBoss">Дроп: ${a.boss}</div><div class="aDesc">${a.desc}</div>
-            <div class="aStatus">${equipped ? "✅ Экипировано" : "Нажмите, чтобы экипировать"}</div>`;
+            <div class="aBoss">Drop: ${a.boss}</div><div class="aDesc">${a.desc}</div>
+            <div class="aStatus">${equipped ? "✅ Equipped" : "Click to equip"}</div>`;
         card.onclick = () => toggleEquip(id);
         ownedList.appendChild(card);
     }
@@ -158,11 +154,11 @@ const weapons = [
     { name:"Rainbow Blade",   damage:120, cooldown:500, mana:0,  color:"#ff44ff", category:"melee"  },
     { name:"Prismatic Staff", damage:150, cooldown:800, mana:0,  color:"#44ffcc", category:"magic"  },
     { name:"Ashen Blade",     damage:190, cooldown:520, mana:0,  color:"#ff7733", category:"melee"  },
-    { name:"Magma Staff",     damage:77,  cooldown:860, mana:0,  color:"#ffaa22", category:"magic"  }
+    { name:"Magma Staff",     damage:150, cooldown:860, mana:0,  color:"#ffaa22", category:"magic"  }
 ];
 
 // ================================================================
-//  УТИЛИТЫ
+//  UTILITIES
 // ================================================================
 const distance = (a,b) => Math.hypot(a.x-b.x, a.y-b.y);
 const angleTo  = (a,b) => Math.atan2(b.y-a.y, b.x-a.x);
@@ -196,7 +192,7 @@ function pointSegDist(px,py,x1,y1,x2,y2){
 }
 
 // ================================================================
-//  СУЩНОСТИ
+//  ENTITIES
 // ================================================================
 function createPlayer(){
     return { x: canvas.width/2, y: canvas.height-180, radius:18,
@@ -237,9 +233,9 @@ const DRAGON_ATTACKS = {
     4: ['breath','salvo','flames','shockwave','meteors','dash','tornado','minions','laser','dive']
 };
 const ATTACK_LABEL = {
-    breath:'⚠ ОГНЕННОЕ ДЫХАНИЕ', salvo:'⚠ ЗАЛП ОГНЕШАРОВ', meteors:'⚠ ПЫЛАЮЩИЕ МЕТЕОРЫ',
-    dash:'⚠ РЫВОК ДРАКОНА', tornado:'⚠ ОГНЕННЫЕ СМЕРЧИ', flames:'⚠ ВОЛНА ПЛАМЕНИ',
-    shockwave:'⚠ УДАР КРЫЛЬЕВ', minions:'⚠ ПРИЗЫВ ДРАКОНЧИКОВ', laser:'⚠ ЛУЧИ ИЗ ГЛАЗ', dive:'⚠ ПИКИРОВАНИЕ'
+    breath:'⚠ FIRE BREATH', salvo:'⚠ FIREBALL SALVO', meteors:'⚠ BLAZING METEORS',
+    dash:'⚠ DRAGON CHARGE', tornado:'⚠ FIRE TORNADOES', flames:'⚠ FLAME WAVE',
+    shockwave:'⚠ WING SLAM', minions:'⚠ DRAKELING SUMMON', laser:'⚠ EYE BEAMS', dive:'⚠ DIVE BOMB'
 };
 
 // --------- SOLAR DEVOURER ---------
@@ -271,9 +267,9 @@ const SOLAR_ATTACKS = {
     3: ['fireballs','charge','mines','laser','meteors','bursts','burrow','beamring','split']
 };
 const SOLAR_LABEL = {
-    fireballs:'⚠ СОЛНЕЧНЫЕ ОГНЕШАРЫ', charge:'⚠ СОЛНЕЧНЫЙ РЫВОК', mines:'⚠ СОЛНЕЧНЫЕ МИНЫ',
-    laser:'⚠ СОЛНЕЧНЫЙ ЛАЗЕР', meteors:'⚠ МЕТЕОРИТНЫЙ ДОЖДЬ', bursts:'⚠ ЭНЕРГЕТИЧЕСКИЙ ВЗРЫВ',
-    burrow:'⚠ ПОДЗЕМНАЯ АТАКА', beamring:'⚠ КОЛЬЦО ЛУЧЕЙ', split:'⚠ РАЗДЕЛЕНИЕ СЕГМЕНТОВ'
+    fireballs:'⚠ SOLAR FIREBALLS', charge:'⚠ SOLAR CHARGE', mines:'⚠ SOLAR MINES',
+    laser:'⚠ SOLAR LASER', meteors:'⚠ METEOR SHOWER', bursts:'⚠ ENERGY BURST',
+    burrow:'⚠ BURROW STRIKE', beamring:'⚠ BEAM RING', split:'⚠ SEGMENT SPLIT'
 };
 
 // --------- THE TWO-FACED DEMON ---------
@@ -297,13 +293,13 @@ const DEMON_ATTACKS = {
     4: ['dismantle','melee','lightning','netDismantle','lightningSpear','dismantleBarrage','fourArmed','dualRoar']
 };
 const DEMON_LABEL = {
-    dismantle:'⚠ ДЕМОНТАЖ', melee:'⚠ УДАР ЧЕТЫРЁХ РУК', lightning:'⚠ НЕБЕСНАЯ МОЛНИЯ',
-    netDismantle:'⚠ СЕТЬ ДЕМОНТАЖА', lightningSpear:'⚠ КОПЬЁ МОЛНИИ', dismantleBarrage:'⚠ ШКВАЛ ДЕМОНТАЖА',
-    fourArmed:'⚠ КОМБО ЧЕТЫРЁХ РУК', dualRoar:'⚠ РЁВ ДВУХ ПАСТЕЙ', cataclysm:'⚠ КАТАКЛИЗМ ДВУЛИКОГО'
+    dismantle:'⚠ DISMANTLE', melee:'⚠ FOUR-ARMED STRIKE', lightning:'⚠ SKY LIGHTNING',
+    netDismantle:'⚠ DISMANTLE NET', lightningSpear:'⚠ LIGHTNING SPEAR', dismantleBarrage:'⚠ DISMANTLE BARRAGE',
+    fourArmed:'⚠ FOUR-ARMED COMBO', dualRoar:'⚠ TWIN-MAW ROAR', cataclysm:'⚠ TWO-FACED CATACLYSM'
 };
 
 // ================================================================
-//  ФОНОВЫЕ ЧАСТИЦЫ
+//  BACKGROUND PARTICLES
 // ================================================================
 function initBgParticles(){
     bgParticles = [];
@@ -321,20 +317,19 @@ initBgParticles();
 updateArtifactBar();
 
 // ================================================================
-//  КЛАСС
+//  CLASS
 // ================================================================
 function selectClass(cls){
     if (currentClass || !['warrior','mage','ranger','summoner'].includes(cls)) return;
-    activeDifficulty = document.getElementById('difficulty').value;
     runElapsed = 0; healCooldown = 0; paused = false; journalOpen = false;
 
     currentClass = cls;
     classBonus = { damageMelee:1, damageMagic:1, damageRanged:1, damageAll:1, speedMult:1, manaRegenMult:1, hpBonus:0, manaBonus:0 };
     let startWeapon = 0, label = "";
-    if (cls==='warrior'){ classBonus.damageMelee=1.25; classBonus.hpBonus=50; startWeapon=0; label="Воин"; }
-    else if (cls==='mage'){ classBonus.damageMagic=1.30; classBonus.manaBonus=100; classBonus.manaRegenMult=2; startWeapon=2; label="Маг"; }
-    else if (cls==='ranger'){ classBonus.damageRanged=1.20; classBonus.speedMult=1.30; startWeapon=4; label="Стрелок"; }
-    else if (cls==='summoner'){ classBonus.damageAll=1.15; classBonus.hpBonus=50; classBonus.manaBonus=50; startWeapon=1; label="Призыватель"; }
+    if (cls==='warrior'){ classBonus.damageMelee=1.25; classBonus.hpBonus=50; startWeapon=0; label="Warrior"; }
+    else if (cls==='mage'){ classBonus.damageMagic=1.30; classBonus.manaBonus=100; classBonus.manaRegenMult=2; startWeapon=2; label="Mage"; }
+    else if (cls==='ranger'){ classBonus.damageRanged=1.20; classBonus.speedMult=1.30; startWeapon=4; label="Ranger"; }
+    else if (cls==='summoner'){ classBonus.damageAll=1.15; classBonus.hpBonus=50; classBonus.manaBonus=50; startWeapon=1; label="Summoner"; }
     player = createPlayer(); boss = createMahoraga();
     inventory = [0,1,2,3,4,15]; weapon = startWeapon;
     document.getElementById("classNameText").textContent = label;
@@ -343,11 +338,11 @@ function selectClass(cls){
     document.getElementById("deathScreen").style.display = "none";
     document.getElementById("bossHealth").style.width = "100%";
     updateWeaponUI();
-    showMessage(`✅ Класс выбран: ${label}`);
+    showMessage(`✅ Class selected: ${label}`);
 }
 
 // ================================================================
-//  ВВОД
+//  INPUT
 // ================================================================
 window.addEventListener("keydown", e => {
     if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
@@ -570,7 +565,8 @@ function initMobileControls(){
 initMobileControls();
 
 function updateWeaponUI(){
-    document.querySelectorAll(".weapon").forEach((el,i) => {
+    document.querySelectorAll(".weapon").forEach(el => {
+        const i = parseInt(el.dataset.id);
         const active = (i===weapon && inventory.includes(i));
         el.classList.toggle("active", active);
         el.classList.toggle("hidden", !inventory.includes(i));
@@ -608,7 +604,7 @@ function dash(){
 }
 
 // ================================================================
-//  ОРУЖИЕ В РУКЕ
+//  WEAPON IN HAND
 // ================================================================
 function drawWeaponInHand(idx){
     const w = weapons[idx]; if (!w) return;
@@ -693,7 +689,7 @@ function drawWeaponInHand(idx){
 }
 
 // ================================================================
-//  АТАКА ИГРОКА
+//  PLAYER ATTACK
 // ================================================================
 function applyClassBonus(base, wi){
     const cat = weapons[wi].category;
@@ -702,7 +698,6 @@ function applyClassBonus(base, wi){
     else if (cat==="magic") m*=classBonus.damageMagic;
     else if (cat==="ranged") m*=classBonus.damageRanged;
     if (hasArtifact('demon_core')) m *= 1.15;
-    if (hasArtifact('demon_horn_charm')) m *= 1.20;
     return base * m * classBonus.damageAll;
 }
 function spawnPlayerProjectile(a,damage,color,wi,speed=10,radius=10,life=1200,extra={}){
@@ -760,7 +755,6 @@ function triggerDevStickExplosion(){
             fireBurst(en.x, en.y, 40, 20, 2.5);
         }
     }
-    applyLifesteal(dmg);
     const maxR = Math.hypot(canvas.width, canvas.height);
     shockwaves.push({ x: canvas.width/2, y: canvas.height/2, r: 10, max: maxR, speed: 32, band: 90, dmg: 0, hit: true, color: "#ff0055" });
     shockwaves.push({ x: mouse.x, y: mouse.y, r: 10, max: maxR * .8, speed: 36, band: 70, dmg: 0, hit: true, color: "#ffff00" });
@@ -775,7 +769,7 @@ function triggerDevStickExplosion(){
 }
 
 // ================================================================
-//  АТАКИ ПРЕДЫДУЩИХ БОССОВ
+//  EARLY BOSS ATTACKS
 // ================================================================
 function fireEnemyAt(x,y,a,speed,damage,radius,color,life=1800,extra={}){
     enemyProjectiles.push({ x, y, vx:Math.cos(a)*speed, vy:Math.sin(a)*speed, radius, damage, life, color, trail:[], ...extra });
@@ -818,7 +812,7 @@ function ethernaty1Attack(){
 }
 
 // ================================================================
-//  FIRE DESTROYER — ЛОГИКА
+//  FIRE DESTROYER — LOGIC
 // ================================================================
 function dragonPhaseOf(d){
     const r = d.hp / d.maxHp;
@@ -940,14 +934,14 @@ function updateDragon(dt){
         d.phase = newPhase;
         fireGlow = 1;
         fireBurst(d.x, d.y, 90, 13, 1.6);
-        const names = { 2:"ФАЗА II — ЯРОСТЬ РАСТЁТ", 3:"ФАЗА III — ДРАКОН В ЯРОСТИ", 4:"ФИНАЛ — АРЕНА В ОГНЕ" };
+        const names = { 2:"PHASE II — RISING FURY", 3:"PHASE III — THE DRAGON RAGES", 4:"FINALE — ARENA ABLAZE" };
         showMessage("🔥 " + (names[newPhase]||""));
         d.attackCooldown = Math.min(d.attackCooldown, 500);
     }
     document.getElementById("phase").textContent =
-        `🔥 ФАЗА ${d.phase} — ${['','ПРОБУЖДЕНИЕ','УСКОРЕНИЕ','ЯРОСТЬ','АРЕНА В ОГНЕ'][d.phase]} · HP ${Math.max(0,Math.ceil(d.hp))}`;
+        `🔥 PHASE ${d.phase} — ${['','AWAKENING','ACCELERATION','FURY','ARENA ABLAZE'][d.phase]} · HP ${Math.max(0,Math.ceil(d.hp))}`;
 
-    // --- фоновое пламя тела
+    // --- ambient body flames
     if (Math.random() < .5 + d.phase*.12){
         const ox = random(-70,70), oy = random(-40,40);
         particles.push({ x:d.x+ox, y:d.y+oy, vx:random(-.4,.4), vy:random(-1.6,-.5),
@@ -955,7 +949,7 @@ function updateDragon(dt){
             color:["#ffdd66","#ff9922","#ff4400"][Math.floor(Math.random()*3)], gravity:-.02 });
     }
 
-    // --- финальная фаза: постоянные опасности арены
+    // --- final phase: persistent arena hazards
     if (d.phase === 4){
         d.arenaTick = (d.arenaTick||0) + dt;
         if (d.arenaTick > 620){
@@ -968,9 +962,9 @@ function updateDragon(dt){
         if (d.arenaTick > 1500){ d.arenaTick = 0; spawnMeteor(random(60, canvas.width-60), -random(40,300), 57, 0); }
     }
 
-    // --- состояния
+    // --- states
     if (d.state === 'idle'){
-        // парение вокруг цели
+        // hover around the target
         const targetX = clamp(p.x - d.facing*250 + Math.sin(worldTime*.0007)*90, 140, canvas.width-140);
         const targetY = clamp(240 + Math.sin(worldTime*.0011)*50, 150, canvas.height*.45);
         const spd = .0022 + d.phase*.0009;
@@ -1012,14 +1006,14 @@ function updateDragon(dt){
     }
     else if (d.state === 'dive'){
         d.stateTimer -= dt;
-        if (d.diveStage === 0){ // взлёт
+        if (d.diveStage === 0){ // take off
             d.y -= dt * .55;
             if (d.y < -200){ d.diveStage = 1; d.diveWait = 850; d.diveX = p.x; }
-        } else if (d.diveStage === 1){ // тень-предупреждение
+        } else if (d.diveStage === 1){ // warning shadow
             d.diveWait -= dt;
             d.x += (p.x - d.x) * .01;
             if (d.diveWait <= 0){ d.diveStage = 2; d.diveX = d.x; }
-        } else if (d.diveStage === 2){ // падение
+        } else if (d.diveStage === 2){ // fall
             d.y += dt * 2.0;
             fireBurst(d.x, d.y-40, 5, 4, 1.4);
             if (d.y >= GROUND() - 70){
@@ -1097,7 +1091,7 @@ function runActiveAttack(d, dt){
 }
 
 // ================================================================
-//  SOLAR DEVOURER — ЛОГИКА
+//  SOLAR DEVOURER — LOGIC
 // ================================================================
 function getSolarSegment(w, i){
     const idx = Math.min(w.history.length-1, i*w.ptsPerSeg);
@@ -1275,12 +1269,12 @@ function updateSolarDevourer(dt){
     if (newPhase !== w.phase){
         w.phase = newPhase;
         fireGlow = Math.max(fireGlow,.8);
-        showMessage(newPhase===3 ? "☀️ SOLAR DEVOURER В ЯРОСТИ!" : "☀️ АРЕНА НАПОЛНЯЕТСЯ СОЛНЕЧНОЙ ЭНЕРГИЕЙ!");
+        showMessage(newPhase===3 ? "☀️ SOLAR DEVOURER IS ENRAGED!" : "☀️ THE ARENA FILLS WITH SOLAR ENERGY!");
         fireBurst(w.head.x, w.head.y, 100, 16, 1.8);
         w.attackCooldown = Math.min(w.attackCooldown, 500);
     }
     document.getElementById("phase").textContent =
-        `☀️ ФАЗА ${w.phase} — ${['','ПРОБУЖДЕНИЕ','СОЛНЕЧНЫЙ ШТОРМ','ЯРОСТЬ ПОЖИРАТЕЛЯ'][w.phase]} · HP ${Math.max(0,Math.ceil(w.hp))}`;
+        `☀️ PHASE ${w.phase} — ${['','AWAKENING','SOLAR STORM','DEVOURER FURY'][w.phase]} · HP ${Math.max(0,Math.ceil(w.hp))}`;
 
     if (w.state === 'emerge'){
         w.stateTimer -= dt;
@@ -1388,7 +1382,7 @@ function updateSolarDevourer(dt){
 }
 
 // ================================================================
-//  THE TWO-FACED DEMON — ЛОГИКА
+//  THE TWO-FACED DEMON — LOGIC
 // ================================================================
 function demonPhaseOf(w){
     const r = w.hp / w.maxHp;
@@ -1525,13 +1519,13 @@ function updateTwoFacedDemon(dt){
     const newPhase = demonPhaseOf(w);
     if (newPhase !== w.phase){
         w.phase = newPhase;
-        showMessage(newPhase===4 ? "👹 ДВА ЛИЦА КРИЧАТ ОДНОВРЕМЕННО! КАТАКЛИЗМ!" :
-            newPhase===3 ? "👹 ЗЛОБНЫЙ ДЕМОН ПРОБУЖДАЕТСЯ ПОЛНОСТЬЮ!" : "👹 ПРОКЛЯТАЯ ЯРОСТЬ НАРАСТАЕТ!");
+        showMessage(newPhase===4 ? "👹 BOTH FACES SCREAM AT ONCE! CATACLYSM!" :
+            newPhase===3 ? "👹 THE WRATHFUL DEMON FULLY AWAKENS!" : "👹 CURSED FURY RISES!");
         fireBurst(w.x, w.y, 90, 16, 1.6);
         w.attackCooldown = Math.min(w.attackCooldown, 500);
     }
     document.getElementById("phase").textContent =
-        `👹 ФАЗА ${w.phase} — ${['','ПРОБУЖДЕНИЕ ДЕМОНА','ПРОКЛЯТАЯ ЯРОСТЬ','ЗЛОБНЫЙ ДЕМОН','КАТАКЛИЗМ ДВУЛИКОГО'][w.phase]} · HP ${Math.max(0,Math.ceil(w.hp))}`;
+        `👹 PHASE ${w.phase} — ${['','DEMON AWAKENING','CURSED FURY','WRATHFUL DEMON','TWO-FACED CATACLYSM'][w.phase]} · HP ${Math.max(0,Math.ceil(w.hp))}`;
 
     if (w.state === 'emerge'){
         w.stateTimer -= dt;
@@ -1570,13 +1564,11 @@ function updateTwoFacedDemon(dt){
 }
 
 // ================================================================
-//  ОПАСНОСТИ АРЕНЫ
+//  ARENA HAZARDS
 // ================================================================
 function hurtPlayer(amount, color="#ff3333", fireSource=false){
     if (!player || player.invincible > 0 || gameOver || paused || journalOpen || artifactMenuOpen || workshopMenuOpen) return false;
-    amount *= DIFFICULTIES[activeDifficulty].damage;
     if (fireSource && hasArtifact('dragon_heart')) amount *= 0.75;
-    if (hasArtifact('demon_talisman')) amount *= 0.75;
     if (hasArtifact('adaptation_wheel')){
         amount *= Math.max(0, 1 - playerAdaptation * .02);
         playerAdaptation = Math.min(50, playerAdaptation + 1);
@@ -1597,12 +1589,12 @@ function explode(x,y,radius,dmg,scale=1){
     if (player && distance({x,y}, player) < radius) hurtPlayer(dmg, "#ff6600", true);
 }
 function updateHazards(dt){
-    // отложенные таймеры
+    // deferred timers
     for (let i=pendingTimers.length-1;i>=0;i--){
         pendingTimers[i].t -= dt;
         if (pendingTimers[i].t <= 0){ pendingTimers[i].fn(); pendingTimers.splice(i,1); }
     }
-    // метеоры
+    // meteors
     for (let i=meteors.length-1;i>=0;i--){
         const m = meteors[i];
         if (m.delay > 0){ m.delay -= dt; continue; }
@@ -1616,7 +1608,7 @@ function updateHazards(dt){
         if (m.y >= m.targetY){ explode(m.x, m.targetY, 90, m.dmg*.8); meteors.splice(i,1); continue; }
         if (m.x < -120 || m.x > canvas.width+120) meteors.splice(i,1);
     }
-    // смерчи
+    // tornadoes
     for (let i=tornadoes.length-1;i>=0;i--){
         const t = tornadoes[i];
         t.life -= dt; t.angle += dt*.012;
@@ -1631,7 +1623,7 @@ function updateHazards(dt){
         }
         if (t.life <= 0) tornadoes.splice(i,1);
     }
-    // ударные волны
+    // shockwaves
     for (let i=shockwaves.length-1;i>=0;i--){
         const s = shockwaves[i];
         s.r += s.speed * dt * .06;
@@ -1641,7 +1633,7 @@ function updateHazards(dt){
         }
         if (s.r > s.max) shockwaves.splice(i,1);
     }
-    // лучи
+    // beams
     for (let i=beams.length-1;i>=0;i--){
         const b = beams[i];
         if (b.vx || b.vy){ b.x += b.vx*dt*.06; b.y += b.vy*dt*.06; }
@@ -1667,7 +1659,7 @@ function updateHazards(dt){
             if (b.active <= 0) beams.splice(i,1);
         }
     }
-    // гейзеры
+    // geysers
     for (let i=geysers.length-1;i>=0;i--){
         const g = geysers[i];
         if (g.warn > 0){ g.warn -= dt; if (g.warn <= 0) g.active = 900; continue; }
@@ -1677,7 +1669,7 @@ function updateHazards(dt){
         if (player && Math.abs(player.x-g.x) < 34 && player.y > GROUND()-320) hurtPlayer(g.dmg, "#ffaa33", true);
         if (g.active <= 0) geysers.splice(i,1);
     }
-    // молнии Двуликого Демона
+    // Two-Faced Demon lightning
     for (let i=demonLightnings.length-1;i>=0;i--){
         const l = demonLightnings[i];
         if (l.warn > 0){
@@ -1693,7 +1685,7 @@ function updateHazards(dt){
             life:1, maxLife:.4, size:random(3,7), color:["#dd99ff","#8844ff","#ffffff"][Math.floor(Math.random()*3)], gravity:0 });
         if (l.active <= 0) demonLightnings.splice(i,1);
     }
-    // миньоны
+    // minions
     for (let i=minions.length-1;i>=0;i--){
         const mn = minions[i];
         mn.flap += dt*.012; mn.orbit += dt*.0009;
@@ -1714,7 +1706,7 @@ function updateHazards(dt){
             minions.splice(i,1);
         }
     }
-    // солнечные мины
+    // solar mines
     for (let i=solarMines.length-1;i>=0;i--){
         const mn = solarMines[i];
         mn.armDelay -= dt; mn.life -= dt; mn.pulse += dt*.006;
@@ -1728,11 +1720,8 @@ function updateHazards(dt){
 }
 
 // ================================================================
-//  СТОЛКНОВЕНИЯ СНАРЯДОВ ИГРОКА
+//  PLAYER PROJECTILE COLLISIONS
 // ================================================================
-function applyLifesteal(damage){
-    if (player && hasArtifact('dragon_heart')) player.hp = Math.min(player.maxHp, player.hp + damage*0.08);
-}
 function hitBoss(p){
     if (!bossDefeated && boss){
         if (Math.hypot(p.x-boss.x, p.y-boss.y) < boss.radius + p.radius){
@@ -1746,13 +1735,12 @@ function hitBoss(p){
                 boss.adaptWheelTarget += Math.PI/4;
                 boss.adaptWheelFlash = 1;
                 boss.adaptWheelLit = Math.min(8, (boss.adaptWheelLit||0)+1);
-                showMessage(`🔯 АДАПТАЦИЯ 50%: ${weapons[wi].name} — колесо Махораги поворачивается!`);
+                showMessage(`🔯 ADAPTATION 50%: ${weapons[wi].name} — the wheel of the King of Adaptation turns!`);
                 }
             const damage = Math.max(1, Math.floor(p.damage*(1-resist)));
             boss.hp -= damage; igniteTarget(boss); totalDamage += damage;
             damageNumber(boss.x+random(-30,30), boss.y+random(-20,20), damage, p.color, true);
             particle(p.x, p.y, p.color, 12, 6, .6);
-            applyLifesteal(damage);
             adaptationGlobal++;
             if (adaptationGlobal >= 25 && boss.phase === 1) boss.phase = 2;
             if (adaptationGlobal >= 60 && boss.phase === 2) boss.phase = 3;
@@ -1765,31 +1753,28 @@ function hitBoss(p){
             ethernaty1.hp -= damage; igniteTarget(ethernaty1); totalDamage += damage;
             damageNumber(ethernaty1.x, ethernaty1.y, damage, p.color, true);
             particle(p.x, p.y, p.color, 16, 8, .6);
-            applyLifesteal(damage);
             return true;
         }
     }
-    // миньоны — приоритетно, они ближе
+    // minions first, they are closer
     for (const mn of minions){
         if (Math.hypot(p.x-mn.x, p.y-mn.y) < mn.radius + p.radius){
             const damage = Math.max(1, Math.floor(p.damage));
             mn.hp -= damage; igniteTarget(mn); totalDamage += damage;
             damageNumber(mn.x, mn.y, damage, "#ffcc66");
             particle(p.x, p.y, "#ffaa44", 10, 6, .5);
-            applyLifesteal(damage);
             return true;
         }
     }
     if (dragon && !dragonDefeated){
         const dx = p.x - dragon.x, dy = p.y - dragon.y;
-        // вытянутый хитбокс под силуэт дракона
+        // elongated hitbox matching the dragon silhouette
         if ((dx*dx)/((120+p.radius)**2) + (dy*dy)/((74+p.radius)**2) < 1){
             const damage = Math.max(1, Math.floor(p.damage*.8));
             dragon.hp -= damage; igniteTarget(dragon); totalDamage += damage;
             dragon.hitFlash = 1;
             damageNumber(dragon.x+random(-50,50), dragon.y+random(-30,30), damage, p.color, true);
             fireBurst(p.x, p.y, 8, 5, .8);
-            applyLifesteal(damage);
             return true;
         }
     }
@@ -1807,7 +1792,6 @@ function hitBoss(p){
             w.hp -= damage; igniteTarget(w); totalDamage += damage; w.hitFlash = 1;
             damageNumber(w.head.x+random(-40,40), w.head.y+random(-30,30), damage, p.color, true);
             fireBurst(p.x, p.y, 8, 5, .8);
-            applyLifesteal(damage);
             return true;
         }
         for (const mw of w.miniWorms){
@@ -1816,7 +1800,6 @@ function hitBoss(p){
                 mw.hp -= damage; igniteTarget(mw); igniteTarget(w); totalDamage += damage;
                 damageNumber(mw.x, mw.y, damage, p.color);
                 fireBurst(p.x, p.y, 6, 4, .6);
-                applyLifesteal(damage);
                 return true;
             }
         }
@@ -1828,7 +1811,6 @@ function hitBoss(p){
             w.hp -= damage; igniteTarget(w); totalDamage += damage; w.hitFlash = 1;
             damageNumber(w.x+random(-40,40), w.y+random(-50,10), damage, p.color, true);
             fireBurst(p.x, p.y, 8, 5, .8);
-            applyLifesteal(damage);
             return true;
         }
     }
@@ -1846,7 +1828,7 @@ function hitPlayerProjectile(p){
 }
 
 // ================================================================
-//  ОБНОВЛЕНИЕ
+//  UPDATE
 // ================================================================
 function update(dt){
     if (gameOver || !currentClass || workshopMenuOpen || artifactMenuOpen || paused || journalOpen) return;
@@ -1870,7 +1852,7 @@ function update(dt){
         if (p.y > canvas.height+10) p.y = -10;
     }
 
-    // --- игрок
+    // --- player
     let dx=0, dy=0;
     if (keys["w"]||keys["arrowup"]) dy--;
     if (keys["s"]||keys["arrowdown"]) dy++;
@@ -1886,7 +1868,7 @@ function update(dt){
     if (!(weapon === 12 && mouse.down && channelActive)) player.mana = clamp(player.mana + dt*.015*classBonus.manaRegenMult, 0, player.maxMana);
     player.hp = Math.min(player.hp + dt/1000*(hasArtifact('solar_core')?3:1), player.maxHp);
 
-    // --- Махорага
+    // --- The King of Adaptation
     if (!bossDefeated && boss){
         const a = angleTo(boss, player), dist = distance(boss, player);
         const desired = boss.phase>=3 ? 310 : boss.phase===2 ? 280 : 250;
@@ -1915,7 +1897,7 @@ function update(dt){
             hurtPlayer(14 + boss.phase*5, "#ff6644", true);
         }
         document.getElementById("phase").textContent =
-            `ФАЗА ${boss.phase} — АДАПТАЦИЯ: ${Math.min(100, Math.floor(adaptationGlobal/60*100))}%`;
+            `PHASE ${boss.phase} — ADAPTATION: ${Math.min(100, Math.floor(adaptationGlobal/60*100))}%`;
         document.getElementById("bossHealth").style.width = `${Math.max(0, boss.hp/boss.maxHp*100)}%`;
         if (boss.hp <= 0){
             recordBossKill(0);
@@ -2028,8 +2010,6 @@ function update(dt){
             twoFacedDemonDefeated = true;
             if (!killedBosses.has(4)){ victory = true; saveRecord(); }
             grantArtifact('demon_core', twoFacedDemon.x, twoFacedDemon.y);
-            pickups.push({ x: twoFacedDemon.x - 140, y: twoFacedDemon.y + 30, artifactId: 'demon_talisman' });
-            pickups.push({ x: twoFacedDemon.x + 140, y: twoFacedDemon.y + 30, artifactId: 'demon_horn_charm' });
             pickups.push({ x: twoFacedDemon.x, y: twoFacedDemon.y + 50, weaponIndex: 14, color: '#cc44ff' });
             recordBossKill(4);
             workshopUnlocked = true;
@@ -2046,7 +2026,7 @@ function update(dt){
 
     updateHazards(dt);
 
-    // --- пикапы
+    // --- pickups
     for (let i=pickups.length-1;i>=0;i--){
         const pk = pickups[i];
         if (distance(player, pk) < player.radius+22){
@@ -2054,14 +2034,14 @@ function update(dt){
                 grantArtifact(pk.artifactId, pk.x, pk.y);
             } else if (!inventory.includes(pk.weaponIndex)){
                 inventory.push(pk.weaponIndex); updateWeaponUI();
-                showMessage(`✅ Подобрано: ${weapons[pk.weaponIndex].name}`);
+                showMessage(`✅ Picked up: ${weapons[pk.weaponIndex].name}`);
                 particle(pk.x, pk.y, "#ffdd44", 26, 10, .8);
             }
             pickups.splice(i,1);
         }
     }
 
-    // --- снаряды игрока
+    // --- player projectiles
     for (let i=projectiles.length-1;i>=0;i--){
         const p = projectiles[i];
         if (p.homing){
@@ -2083,7 +2063,7 @@ function update(dt){
         if (hitBoss(p) || p.life <= 0 || p.x < -100 || p.x > canvas.width+100 || p.y < -100 || p.y > canvas.height+100)
             projectiles.splice(i,1);
     }
-    // --- снаряды врага
+    // --- enemy projectiles
     for (let i=enemyProjectiles.length-1;i>=0;i--){
         const p = enemyProjectiles[i];
         if (p.homing && player){
@@ -2102,7 +2082,7 @@ function update(dt){
             enemyProjectiles.splice(i,1);
         }
     }
-    // --- частицы
+    // --- particles
     for (let i=particles.length-1;i>=0;i--){
         const p = particles[i];
         p.x += p.vx; p.y += p.vy; p.vx *= .96; p.vy = p.vy*.96 + (p.gravity||0);
@@ -2115,7 +2095,7 @@ function update(dt){
         if (d.life <= 0) damageNumbers.splice(i,1);
     }
 
-    document.getElementById("damageCounter").textContent = `💥 Урон: ${totalDamage}`;
+    document.getElementById("damageCounter").textContent = `💥 Damage: ${totalDamage}`;
     document.getElementById("playerHealth").style.width = `${player.hp/player.maxHp*100}%`;
     document.getElementById("playerMana").style.width = `${player.mana/player.maxMana*100}%`;
     document.getElementById("hpText").textContent = `${Math.ceil(player.hp)} / ${player.maxHp}`;
@@ -2124,7 +2104,7 @@ function update(dt){
 }
 
 // ================================================================
-//  ФОН
+//  BACKGROUND
 // ================================================================
 function drawBackground(){
     let top, mid, bot;
@@ -2143,7 +2123,7 @@ function drawBackground(){
     g.addColorStop(0, top); g.addColorStop(.42, mid); g.addColorStop(1, bot);
     ctx.fillStyle = g; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    // звёзды
+    // stars
     if (biomeBlend < 1.6){
         ctx.save(); ctx.globalAlpha = clamp(1.6-biomeBlend, 0, 1);
         for (let i=0;i<90;i++){
@@ -2156,7 +2136,7 @@ function drawBackground(){
         ctx.restore();
     }
 
-    // лес
+    // forest
     if (biomeBlend < 1){
         ctx.save(); ctx.globalAlpha = (1-biomeBlend)*.5; ctx.fillStyle = "#0a0812";
         for (let i=0;i<12;i++){
@@ -2168,7 +2148,7 @@ function drawBackground(){
         }
         ctx.restore();
     }
-    // космос
+    // cosmos
     if (biomeBlend >= .5 && biomeBlend < 1.5){
         const alpha = biomeBlend >= 1 ? 1-(biomeBlend-1) : biomeBlend;
         ctx.save(); ctx.globalAlpha = alpha;
@@ -2180,12 +2160,12 @@ function drawBackground(){
         ctx.beginPath(); ctx.ellipse(px,py,140,30,.3,0,7); ctx.stroke();
         ctx.restore();
     }
-    // ВУЛКАН
+    // VOLCANO
     if (biomeBlend >= .9){
         const alpha = clamp((biomeBlend-.9)/.9, 0, 1);
         ctx.save(); ctx.globalAlpha = alpha;
 
-        // тёмно-красные облака
+        // dark red clouds
         for (let layer=0; layer<3; layer++){
             const yBase = 40 + layer*70, speed = .004 + layer*.003, alp = .22 - layer*.05;
             ctx.fillStyle = `rgba(${120-layer*20},${20-layer*4},${14},${alp*.4})`;
@@ -2196,7 +2176,7 @@ function drawBackground(){
                 ctx.fill();
             }
         }
-        // горящие горы (2 слоя)
+        // burning mountains (2 layers)
         for (let layer=0; layer<2; layer++){
             const base = canvas.height - 130 + layer*40;
             const h = 230 - layer*70;
@@ -2209,7 +2189,7 @@ function drawBackground(){
                 ctx.lineTo(x + step, base + 40);
             }
             ctx.lineTo(canvas.width+200, base+140); ctx.closePath(); ctx.fill();
-            // кратерное свечение
+            // crater glow
             if (layer === 1){
                 for (let x=-50; x < canvas.width+200; x += step){
                     const peak = base - h*(.55 + .45*Math.abs(Math.sin(x*.013+layer)));
@@ -2220,7 +2200,7 @@ function drawBackground(){
                 }
             }
         }
-        // парящие скалы
+        // floating rocks
         for (let i=0;i<6;i++){
             const rx = ((i*230 + worldTime*.012) % (canvas.width+260)) - 130;
             const ry = 180 + Math.sin(worldTime*.0012 + i*1.7)*26 + (i%3)*70;
@@ -2236,7 +2216,7 @@ function drawBackground(){
         ctx.restore();
     }
 
-    // фоновые частицы
+    // background particles
     for (const [index,p] of bgParticles.entries()){
         if (visualMode === 'minimal' || index % 3 !== 0) continue;
         let show = false, color = "#fff";
@@ -2250,14 +2230,14 @@ function drawBackground(){
     }
     ctx.shadowBlur = 0; ctx.globalAlpha = 1;
 
-    // ЗЕМЛЯ / ЛАВА
+    // GROUND / LAVA
     if (biomeBlend >= .9){
         const gy = GROUND();
-        // лава под ареной
+        // lava under the arena
         const lg = ctx.createLinearGradient(0, gy, 0, canvas.height);
         lg.addColorStop(0, "#8a4e2c"); lg.addColorStop(.4, "#633322"); lg.addColorStop(1, "#301c1b");
         ctx.fillStyle = lg; ctx.fillRect(0, gy, canvas.width, canvas.height-gy);
-        // рябь лавы
+        // lava ripples
         ctx.strokeStyle = "rgba(255,230,140,.5)"; ctx.lineWidth = 2;
         for (let k=0;k<3;k++){
             ctx.beginPath();
@@ -2265,7 +2245,7 @@ function drawBackground(){
                 ctx.lineTo(x, gy + 14 + k*16 + Math.sin(x*.03 + worldTime*.003 + k)*4);
             ctx.stroke();
         }
-        // платформа
+        // platform
         ctx.fillStyle = "#1a0b08"; ctx.fillRect(0, gy-16, canvas.width, 18);
         ctx.fillStyle = "#3a1710"; ctx.fillRect(0, gy-16, canvas.width, 5);
         for (let x=0; x<canvas.width; x+=34){
@@ -2274,7 +2254,7 @@ function drawBackground(){
         }
         ctx.fillStyle = `rgba(255,120,30,${.35+.15*Math.sin(worldTime*.004)})`;
         ctx.fillRect(0, gy-18, canvas.width, 3);
-        // парящие платформы
+        // floating platforms
         for (let x=90; x<canvas.width-90; x+=250){
             ctx.fillStyle = "#1c0d0a"; ctx.fillRect(x, canvas.height-230, 130, 16);
             ctx.fillStyle = "#5a2410"; ctx.fillRect(x, canvas.height-230, 130, 4);
@@ -2288,7 +2268,7 @@ function drawBackground(){
 }
 
 // ================================================================
-//  РИСОВАНИЕ: ИГРОК
+//  DRAWING: PLAYER
 // ================================================================
 function drawPlayer(){
     if (!currentClass || !player) return;
@@ -2312,7 +2292,7 @@ function drawPlayer(){
 }
 
 // ================================================================
-//  РИСОВАНИЕ: СТАРЫЕ БОССЫ
+//  DRAWING: BOSSES
 // ================================================================
 function drawMahoraga(){
     BossArt.guardian(boss);
@@ -2352,7 +2332,7 @@ function drawMinions(){
         ctx.beginPath(); ctx.arc(21,-5,3,0,7); ctx.fill(); ctx.shadowBlur = 0;
         ctx.strokeStyle="#8a1c06"; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(-18,2); ctx.lineTo(-40,10); ctx.stroke();
         ctx.restore();
-        // хп-бар
+        // HP bar
         ctx.fillStyle="rgba(0,0,0,.6)"; ctx.fillRect(mn.x-22, mn.y-32, 44, 5);
         ctx.fillStyle="#ff7722"; ctx.fillRect(mn.x-22, mn.y-32, 44*clamp(mn.hp/mn.maxHp,0,1), 5);
     }
@@ -2363,7 +2343,7 @@ function drawTwoFacedDemon(){
 }
 
 function drawHazards(){
-    // гейзеры
+    // geysers
     for (const g of geysers){
         if (g.warn > 0){
             ctx.save();
@@ -2379,7 +2359,7 @@ function drawHazards(){
             ctx.fillStyle = gg; ctx.fillRect(g.x-26, GROUND()-340, 52, 340);
         }
     }
-    // смерчи
+    // tornadoes
     for (const t of tornadoes){
         ctx.save(); ctx.translate(t.x, t.y);
         for (let i=0;i<10;i++){
@@ -2392,11 +2372,11 @@ function drawHazards(){
         }
         ctx.restore();
     }
-    // метеоры
+    // meteors
     for (const m of meteors){
         if (m.delay > 0) continue;
         ctx.save();
-        // маркер падения
+        // impact marker
         ctx.globalAlpha = .55;
         ctx.fillStyle = "#ff4400";
         ctx.beginPath(); ctx.ellipse(m.x, m.targetY, 30, 8, 0, 0, 7); ctx.fill();
@@ -2407,7 +2387,7 @@ function drawHazards(){
         ctx.fillStyle = "#3a1408"; ctx.beginPath(); ctx.arc(m.x, m.y, m.r*.72, 0, 7); ctx.fill();
         ctx.restore();
     }
-    // ударные волны
+    // shockwaves
     for (const s of shockwaves){
         ctx.save();
         ctx.strokeStyle = `rgba(255,${140+Math.sin(worldTime*.02)*40|0},40,${clamp(1-s.r/s.max,0,1)*.85})`;
@@ -2417,7 +2397,7 @@ function drawHazards(){
         ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 7); ctx.stroke();
         ctx.restore();
     }
-    // лучи
+    // beams
     for (const b of beams){
         const ex = b.x + Math.cos(b.angle)*b.len, ey = b.y + Math.sin(b.angle)*b.len;
         ctx.save();
@@ -2448,7 +2428,7 @@ function drawHazards(){
         }
         ctx.restore();
     }
-    // молнии Двуликого Демона
+    // Two-Faced Demon lightning
     for (const l of demonLightnings){
         ctx.save();
         if (l.warn > 0){
@@ -2468,7 +2448,7 @@ function drawHazards(){
         }
         ctx.restore();
     }
-    // солнечные мины
+    // solar mines
     for (const mn of solarMines){
         ctx.save();
         const armed = mn.armDelay <= 0;
@@ -2484,7 +2464,7 @@ function drawHazards(){
         ctx.beginPath(); ctx.arc(mn.x, mn.y, mn.r*.35, 0, 7); ctx.fill();
         ctx.restore();
     }
-    // тень пикирования
+    // dive shadow
     if (dragon && dragon.state === 'dive' && dragon.diveStage === 1){
         ctx.save();
         ctx.globalAlpha = .6;
@@ -2628,10 +2608,10 @@ function showMessage(text){
 }
 
 // ================================================================
-//  ЦИКЛ
+//  LOOP
 // ================================================================
 
-// Difficulty and run controls. Storage is optional (private browsing/file URLs).
+// Run controls. Storage is optional (private browsing/file URLs).
 let visualMode = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) || isMobileDevice ? 'minimal' : 'calm';
 try { const saved = localStorage.getItem('boss-rush-visuals'); if (saved === 'calm' || saved === 'minimal') visualMode = saved; } catch {}
 function setVisualMode(value){
@@ -2641,15 +2621,11 @@ function setVisualMode(value){
 }
 document.getElementById('visualMode').addEventListener('change',e=>setVisualMode(e.target.value));
 setVisualMode(visualMode);
-const DIFFICULTIES = {
-    easy: { label:'Легка', hp:.7, damage:.6, heal:.4, healWait:16000 },
-    normal: { label:'Звичайна', hp:1, damage:1, heal:.3, healWait:22000 },
-    hard: { label:'Важка', hp:1.4, damage:1.45, heal:.2, healWait:30000 }
-};
-let activeDifficulty = 'normal', paused = false, journalOpen = false;
+// Single balance profile: heal restores 30% of max HP with a 22 second cooldown.
+const HEAL_FRACTION = .3, HEAL_COOLDOWN = 22000;
+let paused = false, journalOpen = false;
 let runElapsed = 0, healCooldown = 0;
 function scaleBoss(entity){
-    entity.hp = Math.round(entity.hp * DIFFICULTIES[activeDifficulty].hp);
     entity.maxHp = entity.hp; return entity;
 }
 function clearInput(){
@@ -2674,30 +2650,26 @@ function toggleJournal(){
 }
 function healPlayer(){
     if (!player || gameOver || paused || journalOpen || workshopMenuOpen || artifactMenuOpen || healCooldown > 0 || player.hp >= player.maxHp) return;
-    const config = DIFFICULTIES[activeDifficulty];
-    player.hp = Math.min(player.maxHp, player.hp + player.maxHp*config.heal);
-    healCooldown = config.healWait;
+    player.hp = Math.min(player.maxHp, player.hp + player.maxHp*HEAL_FRACTION);
+    healCooldown = HEAL_COOLDOWN;
     particle(player.x,player.y,'#73ffc0',30,5);
-    showMessage('✚ Здоров’я відновлено'); updateRunHUD();
+    showMessage('✚ Health restored'); updateRunHUD();
 }
 function formatTime(ms){ const seconds = Math.floor(ms/1000); return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`; }
-function readRecords(){ try { const value=JSON.parse(localStorage.getItem('boss-rush-records') || '{}'); return value && typeof value==='object' ? value : {}; } catch { return {}; } }
+function readBestRun(){ try { const value=Number(localStorage.getItem('boss-rush-best')); return Number.isFinite(value) && value > 0 ? value : null; } catch { return null; } }
 function saveRecord(){
-    const records = readRecords(); const best = records[activeDifficulty];
-    if (!Number.isFinite(best) || runElapsed < best) { records[activeDifficulty] = runElapsed; try { localStorage.setItem('boss-rush-records',JSON.stringify(records)); } catch {} }
+    const best = readBestRun();
+    if (best === null || runElapsed < best) { try { localStorage.setItem('boss-rush-best',String(runElapsed)); } catch {} }
 }
-function refreshDifficulty(){
-    const choice = document.getElementById('difficulty').value;
-    const d = DIFFICULTIES[choice];
-    document.getElementById('difficultyInfo').textContent = `Здоров’я босів ×${d.hp} · Вхідна шкода ×${d.damage} · Лікування ${Math.round(d.heal*100)}%`;
-    const best = readRecords()[choice];
-    document.getElementById('bestRun').textContent = Number.isFinite(best) && best > 0 ? `Найкраща перемога: ${formatTime(best)}` : 'Рекорд: здолай усіх п’ятьох босів';
+function refreshBestRun(){
+    const best = readBestRun();
+    document.getElementById('bestRun').textContent = best ? `Best victory: ${formatTime(best)}` : 'Record: defeat all five bosses';
 }
 function updateRunHUD(){
-    document.getElementById('runStatus').textContent = `${DIFFICULTIES[activeDifficulty].label} · ${formatTime(runElapsed)}`;
+    document.getElementById('runStatus').textContent = `Run time · ${formatTime(runElapsed)}`;
     const button = document.getElementById('healButton');
     button.disabled = healCooldown > 0 || player.hp >= player.maxHp;
-    button.textContent = healCooldown > 0 ? `H · ${Math.ceil(healCooldown/1000)} с` : 'H · Лікування';
+    button.textContent = healCooldown > 0 ? `H · ${Math.ceil(healCooldown/1000)} s` : 'H · Heal';
 
     const mobileDash = document.getElementById('btnMobileDash');
     if (mobileDash && player){
@@ -2708,14 +2680,13 @@ function updateRunHUD(){
         mobileHeal.classList.toggle('cooldown', healCooldown > 0 || (player && player.hp >= player.maxHp));
     }
 }
-document.getElementById('difficulty').addEventListener('change',refreshDifficulty);
 document.getElementById('pauseButton').addEventListener('click',togglePause);
 document.getElementById('healButton').addEventListener('click',healPlayer);
 document.getElementById('journalButton').addEventListener('click',toggleJournal);
 document.querySelectorAll('.classCard').forEach(card => card.addEventListener('keydown',event => {
     if (event.code === 'Enter' || event.code === 'Space') { event.preventDefault(); card.click(); }
 }));
-refreshDifficulty();
+refreshBestRun();
 
 let last = performance.now(), accumulator = 0;
 const STEP = 1000 / 60;
@@ -2750,7 +2721,7 @@ function loop(now){
 requestAnimationFrame(loop);
 
 // ================================================================
-//  ПЕРЕЗАПУСК
+//  RESTART
 // ================================================================
 function restart(){
     resetWorkshop();
@@ -2763,8 +2734,8 @@ function restart(){
     document.getElementById('journalScreen').style.display = 'none';
     document.getElementById('runStatus').textContent = '';
     document.getElementById('healButton').disabled = false;
-    document.getElementById('healButton').textContent = 'H · Лікування';
-    refreshDifficulty();
+    document.getElementById('healButton').textContent = 'H · Heal';
+    refreshBestRun();
 
     player = null; boss = null; ethernaty1 = null; dragon = null; solarDevourer = null; twoFacedDemon = null;
     projectiles = []; enemyProjectiles = []; particles = []; damageNumbers = []; pickups = [];
@@ -2772,8 +2743,8 @@ function restart(){
     pendingTimers.length = 0;
     inventory = [0,1,2,3,4,15]; weapon = 0;
     adaptationGlobal = 0; totalDamage = 0;
-    weaponAdaptation = new Array(16).fill(0);
-    weaponAdaptTurned = new Array(16).fill(false);
+    weaponAdaptation = new Array(weapons.length).fill(0);
+    weaponAdaptTurned = new Array(weapons.length).fill(false);
     gameOver = false; victory = false; bossDefeated = false; firstEthernatyDefeated = false;
     ethernatySpawned = false; dragonSpawned = false; dragonDefeated = false;
     solarDevourerSpawned = false; solarDevourerDefeated = false;
@@ -2788,16 +2759,16 @@ function restart(){
     updateArtifactBar();
     document.getElementById("deathScreen").style.display = "none";
     document.getElementById("winScreen").style.display = "none";
-    document.getElementById("winScreen").querySelector("h1").textContent = "🔥 ПОЛНАЯ ПОБЕДА!";
-    document.getElementById("winScreen").querySelector("p").textContent = "FIRE DESTROYER повержен. Вулкан затих.";
+    document.getElementById("winScreen").querySelector("h1").textContent = "🔥 TOTAL VICTORY!";
+    document.getElementById("winScreen").querySelector("p").textContent = "The Fire Destroyer has fallen. The volcano is silent.";
     document.getElementById("bossWarning").style.display = "none";
     document.getElementById("bossWarning").querySelector(".warnTitle").textContent = "FIRE DESTROYER";
-    document.getElementById("bossWarning").querySelector(".warnSub").textContent = "ПРОБУЖДЁН";
+    document.getElementById("bossWarning").querySelector(".warnSub").textContent = "AWAKENED";
     document.getElementById("bossHealth").style.width = "100%";
-    document.getElementById("finalDamage").textContent = "Общий урон: 0";
-    document.getElementById("phase").textContent = "ФАЗА I — АДАПТАЦИЯ: 0%";
+    document.getElementById("finalDamage").textContent = "Total damage: 0";
+    document.getElementById("phase").textContent = "PHASE I — ADAPTATION: 0%";
     document.getElementById("phase").className = "";
-    document.getElementById("bossName").textContent = "MAHORAGA — БОЖЕСТВЕННЫЙ ГЕНЕРАЛ";
+    document.getElementById("bossName").textContent = "THE KING OF ADAPTATION — THE DIVINE GENERAL";
     document.getElementById("bossName").className = "";
     document.getElementById("bossBar").className = "";
     document.getElementById("bossHealth").className = "";
@@ -2805,6 +2776,6 @@ function restart(){
     document.getElementById("classNameText").textContent = "—";
     document.getElementById("classScreen").style.display = "flex";
     updateWeaponUI(); updateWeaponAdaptUI();
-    document.getElementById("damageCounter").textContent = "💥 Урон: 0";
+    document.getElementById("damageCounter").textContent = "💥 Damage: 0";
 }
 

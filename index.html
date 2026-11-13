@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Ctext y=%2750%27 font-size=%2750%27%3E⚔️%3C/text%3E%3C/svg%3E">
@@ -8,40 +8,40 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05070b">
-<title>Boss Rush — П’ять випробувань</title>
+<title>Boss Rush — The Five Trials</title>
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 <canvas id="game"></canvas>
 <div id="ui">
-    <div id="bossName">MAHORAGA — БОЖЕСТВЕННЫЙ ГЕНЕРАЛ</div>
+    <div id="bossName">THE KING OF ADAPTATION — THE DIVINE GENERAL</div>
     <div id="bossBar"><div id="bossHealth"></div></div>
-    <div id="damageCounter">💥 Урон: 0</div>
-    <div id="phase">ФАЗА I — АДАПТАЦИЯ: 0%</div>
+    <div id="damageCounter">💥 Damage: 0</div>
+    <div id="phase">PHASE I — ADAPTATION: 0%</div>
     <div id="playerHealthBox">
         <div id="playerHealthBg"><div id="playerHealth"></div></div>
         <div id="playerManaBg"><div id="playerMana"></div></div>
-        <div id="stats">HP: <span id="hpText">500 / 500</span>   Мана: <span id="manaText">200 / 200</span></div>
+        <div id="stats">HP: <span id="hpText">500 / 500</span>   Mana: <span id="manaText">200 / 200</span></div>
     </div>
-    <div id="classIndicator">Класс: <span id="classNameText">—</span></div>
+    <div id="classIndicator">Class: <span id="classNameText">—</span></div>
     <div id="artifactBar" onclick="toggleArtifactModal()"></div>
-    <div id="artifactHint">Артефакты (I)</div>
+    <div id="artifactHint">Artifacts (I)</div>
     <div id="weapons">
-        <div class="weapon active" data-id="0"><span class="name">1. Клинок Терры</span><span class="adapt">Адапт: <span id="adapt0">0%</span></span></div>
-        <div class="weapon" data-id="1"><span class="name">2. Звездная пушка</span><span class="adapt">Адапт: <span id="adapt1">0%</span></span></div>
-        <div class="weapon" data-id="2"><span class="name">3. Коса демона</span><span class="adapt">Адапт: <span id="adapt2">0%</span></span></div>
-        <div class="weapon" data-id="3"><span class="name">4. Солнечный взрыв</span><span class="adapt">Адапт: <span id="adapt3">0%</span></span></div>
-        <div class="weapon" data-id="4"><span class="name">5. Лук Пустоты</span><span class="adapt">Адапт: <span id="adapt4">0%</span></span></div>
-        <div class="weapon hidden" data-id="5"><span class="name">6. Лазерный клинок</span><span class="adapt">Адапт: <span id="adapt5">0%</span></span></div>
-        <div class="weapon hidden" data-id="6"><span class="name">7. Теневой посох</span><span class="adapt">Адапт: <span id="adapt6">0%</span></span></div>
-        <div class="weapon hidden" data-id="7"><span class="name">8. Радужный клинок</span><span class="adapt">Адапт: <span id="adapt7">0%</span></span></div>
-        <div class="weapon hidden" data-id="8"><span class="name">9. Призматический посох</span><span class="adapt">Адапт: <span id="adapt8">0%</span></span></div>
-        <div class="weapon hidden" data-id="9"><span class="name">10. Клинок Пепла</span><span class="adapt">Адапт: <span id="adapt9">0%</span></span></div>
-        <div class="weapon hidden" data-id="10"><span class="name">11. Посох Магмы</span><span class="adapt">Адапт: <span id="adapt10">0%</span></span></div>
-        <div class="weapon hidden" data-id="14"><span class="name">12. Посох Демона</span><span class="adapt">Адапт: <span id="adapt14">0%</span></span></div>
+        <div class="weapon active" data-id="0"><span class="name">1. Terra Blade</span><span class="adapt">Adapt: <span id="adapt0">0%</span></span></div>
+        <div class="weapon" data-id="1"><span class="name">2. Star Cannon</span><span class="adapt">Adapt: <span id="adapt1">0%</span></span></div>
+        <div class="weapon" data-id="2"><span class="name">3. Demon Scythe</span><span class="adapt">Adapt: <span id="adapt2">0%</span></span></div>
+        <div class="weapon" data-id="3"><span class="name">4. Solar Burst</span><span class="adapt">Adapt: <span id="adapt3">0%</span></span></div>
+        <div class="weapon" data-id="4"><span class="name">5. Void Bow</span><span class="adapt">Adapt: <span id="adapt4">0%</span></span></div>
+        <div class="weapon hidden" data-id="5"><span class="name">6. Laser Blade</span><span class="adapt">Adapt: <span id="adapt5">0%</span></span></div>
+        <div class="weapon hidden" data-id="6"><span class="name">7. Shadow Staff</span><span class="adapt">Adapt: <span id="adapt6">0%</span></span></div>
+        <div class="weapon hidden" data-id="7"><span class="name">8. Rainbow Blade</span><span class="adapt">Adapt: <span id="adapt7">0%</span></span></div>
+        <div class="weapon hidden" data-id="8"><span class="name">9. Prismatic Staff</span><span class="adapt">Adapt: <span id="adapt8">0%</span></span></div>
+        <div class="weapon hidden" data-id="9"><span class="name">10. Ashen Blade</span><span class="adapt">Adapt: <span id="adapt9">0%</span></span></div>
+        <div class="weapon hidden" data-id="10"><span class="name">11. Magma Staff</span><span class="adapt">Adapt: <span id="adapt10">0%</span></span></div>
+        <div class="weapon hidden" data-id="14"><span class="name">12. Demon Staff</span><span class="adapt">Adapt: <span id="adapt14">0%</span></span></div>
         <div class="weapon" data-id="15"><span class="name">★ Dev Stick</span><span class="adapt">9999999</span></div>
     </div>
-    <div id="runTools"><span id="runStatus"></span><label class="visualControl">Ефекти <select id="visualMode" aria-label="Інтенсивність візуальних ефектів"><option value="calm">Спокійні</option><option value="minimal">Мінімальні</option></select></label><button id="healButton" type="button">H · Лікування</button><button id="pauseButton" type="button">Esc · Пауза</button><button id="journalButton" type="button">B · Боси</button></div><div id="instructions">WASD — движение | ЛКМ — атака | ПРОБЕЛ — рывок | 1–6, Q, Z или клик — смена оружия | I — артефакты</div>
+    <div id="runTools"><span id="runStatus"></span><label class="visualControl">Effects <select id="visualMode" aria-label="Visual effects intensity"><option value="calm">Calm</option><option value="minimal">Minimal</option></select></label><label class="visualControl musicControl">🎵 Music <input id="musicVolume" type="range" min="0" max="100" value="60" aria-label="Music volume"></label><button id="healButton" type="button">H · Heal</button><button id="pauseButton" type="button">Esc · Pause</button><button id="journalButton" type="button">B · Bosses</button></div><div id="instructions">WASD — move | LMB — attack | SPACE — dash | 1–9, 0, Q, Z, F or click — switch weapon | I — artifacts | R — Rift Step | M — mute music</div>
     <div id="mobileControls" class="mobile-controls" style="display:none;">
         <div id="joystickZone" class="joystick-zone">
             <div id="joystickBase" class="joystick-base">
@@ -49,78 +49,91 @@
             </div>
         </div>
         <div id="actionButtons" class="action-buttons">
-            <button id="btnMobileDash" class="mobile-btn btn-dash" type="button" aria-label="Рывок (Dash)">
+            <button id="btnMobileDash" class="mobile-btn btn-dash" type="button" aria-label="Dash">
                 <span class="btn-icon">⚡</span>
                 <span class="btn-lbl">DASH</span>
             </button>
-            <button id="btnMobileAttack" class="mobile-btn btn-attack" type="button" aria-label="Атака (Attack)">
+            <button id="btnMobileAttack" class="mobile-btn btn-attack" type="button" aria-label="Attack">
                 <span class="btn-icon">⚔</span>
                 <span class="btn-lbl">FIRE</span>
             </button>
             <div class="mobile-aux-row">
-                <button id="btnMobileHeal" class="mobile-btn btn-aux btn-heal" type="button" aria-label="Лікування (Heal)">
+                <button id="btnMobileHeal" class="mobile-btn btn-aux btn-heal" type="button" aria-label="Heal">
                     <span class="btn-icon">❤️</span>
                 </button>
-                <button id="btnMobileWeapon" class="mobile-btn btn-aux btn-weapon" type="button" aria-label="Зміна зброї (Next Weapon)">
+                <button id="btnMobileWeapon" class="mobile-btn btn-aux btn-weapon" type="button" aria-label="Next weapon">
                     <span class="btn-icon">⇄</span>
                 </button>
-                <button id="btnMobileInteract" class="mobile-btn btn-aux btn-interact" type="button" aria-label="Майстерня / Виклик (Interact)" style="display:none;">
+                <button id="btnMobileInteract" class="mobile-btn btn-aux btn-interact" type="button" aria-label="Workshop / Summon" style="display:none;">
                     <span class="btn-icon">⚙</span>
                 </button>
             </div>
         </div>
     </div>
     <div id="message"></div>
+    <div id="tutorial" style="display:none;"><div class="tutHead"><span id="tutorialStep"></span><span id="tutorialDots"></span></div><p id="tutorialText"></p><button id="tutorialSkip" type="button">Skip tutorial · K</button></div>
     <div id="attackWarning"></div>
-    <div id="bossWarning"><div class="warnTitle">FIRE DESTROYER</div><div class="warnSub">ПРОБУЖДЁН</div></div>
-    <div id="deathScreen" class="overlay"><h1>ВЫ ПОГИБЛИ</h1><p>Пламя оказалось сильнее.</p><button onclick="restart()">ВОЗРОЖДЕНИЕ</button></div>
+    <div id="bossWarning"><div class="warnTitle">FIRE DESTROYER</div><div class="warnSub">AWAKENED</div></div>
+    <div id="deathScreen" class="overlay"><h1>YOU DIED</h1><p>The flames proved stronger.</p><button onclick="restart()">RESPAWN</button></div>
     <div id="winScreen" class="overlay">
-        <h1>🔥 ПОЛНАЯ ПОБЕДА!</h1>
-        <p>FIRE DESTROYER повержен. Вулкан затих.</p>
-        <p id="finalDamage">Общий урон: 0</p>
-        <button onclick="restart()">ИГРАТЬ СНОВА</button>
+        <h1>🔥 TOTAL VICTORY!</h1>
+        <p>The Fire Destroyer has fallen. The volcano is silent.</p>
+        <p id="finalDamage">Total damage: 0</p>
+        <button onclick="restart()">PLAY AGAIN</button>
+    </div>
+    <div id="idolWinScreen" class="overlay">
+        <h1>✦ YOU WON ✦</h1>
+        <p>The Idol has fallen. The heavens are silent.</p>
+        <p class="byline">by Artur</p>
+        <button onclick="restart()">RESTART</button>
     </div>
     <div id="classScreen" class="overlay">
-        <h1>⚔️ ВЫБЕРИ СВОЙ КЛАСС ⚔️</h1>
-        <p class="subtitle">Каждый класс имеет уникальные бонусы и стартовое оружие</p>
-        <div class="difficultyControl"><label for="difficulty">Складність</label><select id="difficulty"><option value="easy">Легка — для знайомства</option><option value="normal" selected>Звичайна — випробування</option><option value="hard">Важка — для майстрів</option></select><p id="difficultyInfo"></p><p id="bestRun"></p></div><div class="classGrid">
+        <h1>⚔️ CHOOSE YOUR CLASS ⚔️</h1>
+        <p class="subtitle">Each class has unique bonuses and a starting weapon</p>
+        <div class="runRecord"><p id="bestRun"></p><label class="tutorialOption"><input id="tutorialToggle" type="checkbox"> Play the tutorial first</label></div><div class="classGrid">
             <div class="classCard warrior" role="button" tabindex="0" onclick="selectClass('warrior')">
-                <div class="portrait tile-0" role="img" aria-label="warrior"></div><div class="className">ВОИН</div>
-                <div class="classDesc">Мастер ближнего боя. Крепкий и сильный, но медленный.</div>
-                <div class="classBonus">+50 HP, +25% урона в ближнем бою</div>
-                <div class="classWeapon">Стартовое: Клинок Терры</div>
+                <div class="portrait tile-0" role="img" aria-label="warrior"></div><div class="className">WARRIOR</div>
+                <div class="classDesc">Master of close combat. Tough and strong, but slow.</div>
+                <div class="classBonus">+50 HP, +25% melee damage</div>
+                <div class="classWeapon">Starting weapon: Terra Blade</div>
             </div>
             <div class="classCard mage" role="button" tabindex="0" onclick="selectClass('mage')">
-                <div class="portrait tile-1" role="img" aria-label="mage"></div><div class="className">МАГ</div>
-                <div class="classDesc">Повелитель стихий. Много маны, мощные заклинания.</div>
-                <div class="classBonus">+100 маны, +30% урона магии, реген маны x2</div>
-                <div class="classWeapon">Стартовое: Коса демона</div>
+                <div class="portrait tile-1" role="img" aria-label="mage"></div><div class="className">MAGE</div>
+                <div class="classDesc">Lord of the elements. Deep mana pool and powerful spells.</div>
+                <div class="classBonus">+100 mana, +30% magic damage, 2× mana regen</div>
+                <div class="classWeapon">Starting weapon: Demon Scythe</div>
             </div>
             <div class="classCard ranger" role="button" tabindex="0" onclick="selectClass('ranger')">
-                <div class="portrait tile-2" role="img" aria-label="ranger"></div><div class="className">СТРЕЛОК</div>
-                <div class="classDesc">Быстрый и точный. Атакует с безопасного расстояния.</div>
-                <div class="classBonus">+30% скорости, +20% урона дальнего боя</div>
-                <div class="classWeapon">Стартовое: Лук Пустоты</div>
+                <div class="portrait tile-2" role="img" aria-label="ranger"></div><div class="className">RANGER</div>
+                <div class="classDesc">Fast and precise. Strikes from a safe distance.</div>
+                <div class="classBonus">+30% speed, +20% ranged damage</div>
+                <div class="classWeapon">Starting weapon: Void Bow</div>
             </div>
             <div class="classCard summoner" role="button" tabindex="0" onclick="selectClass('summoner')">
-                <div class="portrait tile-3" role="img" aria-label="summoner"></div><div class="className">ПРИЗЫВАТЕЛЬ</div>
-                <div class="classDesc">Управляет энергией. Сбалансированный воин.</div>
-                <div class="classBonus">+50 HP, +50 маны, +15% урона всем</div>
-                <div class="classWeapon">Стартовое: Звездная пушка</div>
+                <div class="portrait tile-3" role="img" aria-label="summoner"></div><div class="className">SUMMONER</div>
+                <div class="classDesc">Commands raw energy. A balanced fighter.</div>
+                <div class="classBonus">+50 HP, +50 mana, +15% damage with everything</div>
+                <div class="classWeapon">Starting weapon: Star Cannon</div>
             </div>
         </div>
     </div>
-    <div id="pauseScreen" class="overlay"><h1>Пауза</h1><p>Esc — продовжити · H — лікування · B — довідник</p><button onclick="togglePause()">Продовжити</button></div><div id="journalScreen" class="overlay"><h1>П’ять випробувань</h1><div class="bossGrid"><article><div class="portrait tile-4"></div><h2>Mahoraga</h2><p>Змінюй зброю, щоб долати адаптацію.</p></article><article><div class="portrait tile-5"></div><h2>Ethernaty</h2><p>Ухиляйся від космічних снарядів.</p></article><article><div class="portrait tile-6"></div><h2>Fire Destroyer</h2><p>Стеж за попередженнями атак дракона.</p></article><article><div class="portrait tile-7"></div><h2>Solar Devourer</h2><p>Оминай міни й рухайся між сегментами.</p></article><article><div class="portrait tile-8"></div><h2>Two-faced Demon</h2><p>Бережи ривок для блискавок і променів.</p></article></div><button onclick="toggleJournal()">Повернутися</button></div><div id="artifactModal" class="overlay">
-        <h1>🎖 АРТЕФАКТЫ БОССОВ</h1>
-        <p class="subtitle">Клик по артефакту — экипировать/снять. Клик по слоту — снять. 5 слотов.</p>
+    <div id="pauseScreen" class="overlay"><h1>Paused</h1><p>Esc — resume · H — heal · B — boss codex</p><button onclick="togglePause()">Resume</button></div><div id="journalScreen" class="overlay"><h1>Boss Codex</h1><p class="subtitle">Defeat the Two-Faced Demon to unlock the hard bosses in the summon panel, one after another. After The Glitch, three mythic bosses wait at the end of the trials, and beyond them, The Idol.</p><div class="bossGrid"><article><div class="portrait tile-4"></div><h2>The King of Adaptation</h2><p class="place">📍 Shrine of the Eight Spokes</p><p class="lore">Eight priests sealed the Divine General inside a forest shrine. Every spoke of its wheel remembers a blade that once wounded it.</p><p class="tip">Switch weapons to break through its adaptation.</p></article><article><div class="portrait tile-5"></div><h2>Ethernaty</h2><p class="place">📍 The Prismatic Void</p><p class="lore">When the first star cracked, light leaked into a fold of space and learned to think. Ethernaty bends every color into a weapon.</p><p class="tip">Weave between cosmic projectiles.</p></article><article><div class="portrait tile-6"></div><h2>Fire Destroyer</h2><p class="place">📍 Caldera of Ashfall</p><p class="lore">The dragon nested in the oldest volcano and burned the northern kingdoms until only the ice of Hrim still held.</p><p class="tip">Watch the dragon’s attack warnings.</p></article><article><div class="portrait tile-7"></div><h2>Solar Devourer</h2><p class="place">📍 The Sunken Sun Pit</p><p class="lore">When the old sun fell, a worm fed on its embers for a thousand years and learned to swallow light itself.</p><p class="tip">Avoid mines and slip between segments.</p></article><article><div class="portrait tile-8"></div><h2>Two-Faced Demon</h2><p class="place">📍 Gate of Two Faces</p><p class="lore">One face judges and the other forgives, never at the same time. It guarded the road to the Sanctuary for an age.</p><p class="tip">Save your dash for lightning and beams.</p></article><article><div class="portrait emblem emblem-moon" role="img" aria-label="Selene Vey"></div><h2>Selene Vey<span class="hardBadge">Hard</span></h2><p class="place">📍 The Drowned Observatory</p><p class="lore">The Sanctuary’s last astronomer tried to close the sky’s eye. The moon hollowed her out, and now the tide obeys her.</p><p class="tip">Dash outward from gravity wells. Her crescents always return to her hand.</p></article><article><div class="portrait emblem emblem-frost" role="img" aria-label="Vael’Khor"></div><h2>Vael’Khor<span class="hardBadge">Hard</span></h2><p class="place">📍 The Shattered Glacier of Hrim</p><p class="lore">A king who froze his own kingdom to stop the Fire Destroyer. He still holds his throne, waiting for a war that ended without him.</p><p class="tip">Blizzards slow you. Look for the gap in every avalanche ring.</p></article><article><div class="portrait emblem emblem-clock" role="img" aria-label="Horologue"></div><h2>Horologue<span class="hardBadge">Hard</span></h2><p class="place">📍 The Clock Spire at World’s End</p><p class="lore">The artificer who forged the King of Adaptation’s wheel became the pendulum of a clock that counts down to the end of every fight.</p><p class="tip">When time stops, find the gap in the ring of frozen bolts.</p></article><article><div class="portrait emblem emblem-glitch" role="img" aria-label="The Glitch"></div><h2>The Glitch<span class="hardBadge">Hard</span></h2><p class="place">📍 The Null Sector</p><p class="lore">When Horologue’s clock struck midnight, something never written slipped through the gap between the hours: a shadow made of every deleted boss.</p><p class="tip">Every hit deals 400 damage. Watch for aim lines, red outlines, glowing portals and the marker where it appears next.</p></article><article><div class="portrait emblem emblem-eclipse" role="img" aria-label="Kaelthar"></div><h2>Kaelthar<span class="mythBadge">Mythic</span></h2><p class="place">📍 The Colosseum of the Black Sun</p><p class="lore">The undefeated duelist the Architect made the last door of the trials. He has never been allowed to stop fighting.</p><p class="tip">Lanes show where he will dash, and his path erupts behind him. Find the gap in every wave of falling swords.</p></article><article><div class="portrait emblem emblem-storm" role="img" aria-label="Nyxara"></div><h2>Nyxara<span class="mythBadge">Mythic</span></h2><p class="place">📍 The Stormspire Above the Clouds</p><p class="lore">The six-winged herald who sang the first storms. When the Glitch broke the trials, she began screaming lightning into the silence.</p><p class="tip">Stand in the dark squares of the judgment grid. Tornadoes pull you in, and ball lightning bursts when it fades.</p></article><article><div class="portrait emblem emblem-architect" role="img" aria-label="The Architect"></div><h2>The Architect<span class="mythBadge">Mythic</span></h2><p class="place">📍 The First Page</p><p class="lore">The author who drew every arena and gave every boss its attacks. It opens the page one last time to write your ending.</p><p class="tip">It replays its creations’ attacks. The heart of a blueprint star is safe until it ignites. When the margins close in, stay on the page.</p></article><article><div class="portrait emblem emblem-god" role="img" aria-label="The Idol"></div><h2>The Idol<span class="godBadge">Divine</span></h2><p class="place">📍 The Throne Beyond Heaven</p><p class="lore">Beyond the last sky, something older than the Architect watched every trial. Now that its author has fallen, it rises to judge you itself.</p><p class="tip">Leave the centre when the Judgement Beam gathers. Hold the Infinity Edge beam between you and a glitch laser to block it. Stand in the middle when lightning crawls along the edges, and cross the cut before half the world falls.</p></article></div><button onclick="toggleJournal()">Back</button></div><div id="artifactModal" class="overlay">
+        <h1>🎖 BOSS ARTIFACTS</h1>
+        <p class="subtitle">Click an artifact to equip or unequip it. Click a slot to clear it. 5 slots.</p>
         <div id="artifactSlotsRow"></div>
         <div id="artifactOwnedList"></div>
-        <div id="artifactEmptyMsg" style="display:none;">Пока нет артефактов — победите боссов, чтобы их получить.</div>
-        <button onclick="toggleArtifactModal()">ЗАКРЫТЬ</button>
+        <div id="artifactEmptyMsg" style="display:none;">No artifacts yet. Defeat bosses to earn them.</div>
+        <button onclick="toggleArtifactModal()">CLOSE</button>
     </div>
 </div>
 <script src="js/boss-art.js" defer></script>
 <script src="js/game.js" defer></script>
 <script src="js/workshop.js" defer></script>
+<script src="js/abyss.js" defer></script>
+<script src="js/mythic.js" defer></script>
+<script src="js/infinity.js" defer></script>
+<script src="js/god.js" defer></script>
+<script src="js/tutorial.js" defer></script>
+<script src="js/music.js" defer></script>
 </body>
 </html> 
