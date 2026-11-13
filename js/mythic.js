@@ -802,75 +802,85 @@ function mSword(){
 
 // ================================================================
 //  ART: KAELTHAR
+//  The mythic bosses are drawn with BossKit (js/boss-art.js) in the first bosses' style.
 // ================================================================
 function drawKaelthar(b){
-    const t = worldTime/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
+    const K = BossKit, t = worldTime/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
     const d = b.data && b.data.dash, dashing = d && d.active, kneel = b.stun > 0 ? 1 : 0, A0 = ctx.globalAlpha;
+    const INK = '#0a0710', GOLD = '#c8913a', prevInk = K.ink(INK);
     for (const g of b.ghosts || []){ ctx.save(); ctx.globalAlpha = A0*(1-g.age/320)*.4; ctx.translate(g.x, g.y); kSilhouette(); ctx.restore(); }
     const lean = dashing ? clamp((d.active.tx-d.active.fx)/400, -1, 1)*.35 : 0;
     ctx.save(); ctx.translate(b.x, b.y + Math.sin(t*1.6)*3*(1-kneel) + kneel*24); ctx.rotate(hit*.04 + lean); ctx.lineJoin = 'round';
     kBlackSun(0, -80, 40 + cast*12 + (b.phase-1)*3, t);
-    // Tattered cape.
-    const cs = Math.sin(t*1.7)*6, cg = ctx.createLinearGradient(0,-50,0,112);
-    cg.addColorStop(0,'#4a0f18'); cg.addColorStop(1,'#14050a');
+    // Tattered cape with folds and a gold-trimmed collar.
+    const cs = Math.sin(t*1.7)*6;
     const cape = [[-30,-48],[30,-48],[56,24+cs],[64,98-cs]];
     for (let i=1;i<8;i++) cape.push([64-i*16, 104 + (i%2 ? -16 : 4) + Math.sin(t*2.2+i)*4]);
     cape.push([-64,98+cs],[-56,24-cs]);
-    abShape(cape, cg, 'rgba(255,179,71,.55)', 1.2);
+    K.shape(cape, K.grad(0,-50,0,112,[[0,'#5a1220'],[1,'#14050a']]), INK, 2);
+    for (let i=-3;i<=3;i++) if (i) K.line([[i*8,-40],[i*17 + Math.sin(t*1.7+i)*3, 92]], 'rgba(0,0,0,.45)', 1.2);
     // Armoured legs; the right knee drops when he kneels.
     for (const s of [-1,1]){
-        const k = kneel && s > 0 ? 1 : 0, pts = [[s*14,26],[s*20,58-k*10],[s*22+k*s*10,90-k*30]];
-        abLine(pts, '#0f0c14', 22); abLine(pts, '#3b3346', 15);
-        abOval(s*20, 58-k*10, 8, 8, '#c8913a');
-        abShape([[s*10,86-k*30],[s*34,86-k*30],[s*30,98-k*30],[s*8,98-k*30]], '#2a2433', '#c8913a', 1);
+        const k = kneel && s > 0 ? 1 : 0, knee = [s*20,58-k*10], foot = [s*22+k*s*10,90-k*30];
+        K.limb([s*14,26], knee, foot, 15, '#3b3346', { armor:GOLD, trim:'#ffe2a8' });
+        K.plate([[knee[0]-8,knee[1]+5],[knee[0]+8,knee[1]+5],[foot[0]+7,foot[1]-6],[foot[0]-7,foot[1]-6]], '#6a6078', '#17121d', 1.2);
+        K.plate([[s*10,86-k*30],[s*34,86-k*30],[s*30,98-k*30],[s*8,98-k*30]], '#5a5068', '#120e17', 1.4);
+        K.line([[s*12,89-k*30],[s*31,89-k*30]], GOLD, 1);
     }
-    for (let i=0;i<3;i++){ const x = -24+i*16; abShape([[x,16],[x+16,16],[x+14,40],[x+2,40]], '#2a2433', '#c8913a', 1); }
-    // Breastplate with the eclipse emblem.
-    const bg = ctx.createLinearGradient(-32,-50,32,24);
-    bg.addColorStop(0,'#5a5068'); bg.addColorStop(.5,'#2a2433'); bg.addColorStop(1,'#120e17');
-    abShape([[-32,-48],[32,-48],[28,8],[14,22],[-14,22],[-28,8]], bg, '#c8913a', 2);
-    abLine([[0,-44],[0,16]], 'rgba(200,145,58,.5)', 1.5);
+    for (let i=0;i<3;i++){ const x = -24+i*16; K.plate([[x,16],[x+16,16],[x+14,40],[x+2,40]], '#5a5068', '#16121c', 1.2); K.line([[x+3,22],[x+13,22]], GOLD, 1); }
+    // Breastplate with pecs, ab plates and the eclipse emblem.
+    K.plate([[-32,-48],[32,-48],[28,8],[14,22],[-14,22],[-28,8]], '#6a6078', '#17121d', 2.2);
+    K.line([[-30,-46],[30,-46]], GOLD, 1.6);
+    K.line([[0,-44],[0,16]], 'rgba(200,145,58,.5)', 1.4);
+    K.line([[-24,-30],[0,-24],[24,-30]], 'rgba(0,0,0,.5)', 1.2);
+    for (let r=0;r<2;r++) K.line([[-14,0+r*8],[14,0+r*8]], 'rgba(0,0,0,.45)', 1);
     abGlow(12, M_SUN); ctx.strokeStyle = M_SUN; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(0,-20,10,0,AB_TAU); ctx.stroke(); ctx.shadowBlur = 0;
-    abOval(2,-20,7.5,7.5,'#07040a');
-    // Spiked pauldrons.
+    K.oval(2,-20,7.5,7.5,'#07040a',INK,0,1);
+    // Layered spiked pauldrons.
     for (const s of [-1,1]){
-        abShape([[s*20,-52],[s*56,-58],[s*68,-38],[s*54,-22],[s*26,-30]], '#2a2433', '#c8913a', 1.5);
-        abShape([[s*28,-44],[s*58,-48],[s*62,-36],[s*30,-34]], '#3b3346');
-        abShape([[s*42,-56],[s*52,-86],[s*54,-56]], '#d9a55a', '#5a3a12', 1);
-        abShape([[s*56,-54],[s*72,-76],[s*66,-48]], '#d9a55a', '#5a3a12', 1);
+        K.plate([[s*20,-52],[s*56,-58],[s*68,-38],[s*54,-22],[s*26,-30]], '#5a5068', '#120e17');
+        K.plate([[s*28,-45],[s*58,-49],[s*62,-37],[s*30,-34]], '#7a7090', '#2a2433', 1);
+        K.line([[s*24,-50],[s*58,-56]], GOLD, 1.2);
+        K.shape([[s*42,-56],[s*52,-88],[s*55,-56]], K.grad(0,-88,0,-56,[[0,'#fff0c8'],[1,'#b07a2a']]), INK, 1.2);
+        K.shape([[s*56,-54],[s*73,-78],[s*66,-47]], K.grad(0,-78,0,-47,[[0,'#fff0c8'],[1,'#b07a2a']]), INK, 1.2);
+        K.rivet(s*38,-40,1.7,GOLD); K.rivet(s*52,-39,1.7,GOLD);
     }
-    // Left gauntlet gathers sunfire while he winds up.
+    // Left arm: a clawed gauntlet gathering sunfire while he winds up.
     const lx = -54 - cast*8, ly = 8 - cast*34;
-    abLine([[-46,-34],[-56,-8],[lx,ly]], '#0f0c14', 16); abLine([[-46,-34],[-56,-8],[lx,ly]], '#3b3346', 11);
-    abOval(lx, ly, 8, 8, '#2a2433');
-    if (cast > .1){ abGlow(16, M_SUN); abOval(lx, ly-6, 5+cast*7, 5+cast*7, 'rgba(255,200,110,.85)'); ctx.shadowBlur = 0; }
+    K.limb([-46,-34], [-56,-8], [lx,ly], 12, '#3b3346', { armor:GOLD, bands:2, trim:GOLD });
+    K.claw(lx, ly, Math.PI/2 + .3 - cast*1.6, '#4a4058', '#e2c088');
+    if (cast > .1){ abGlow(16, M_SUN); K.oval(lx, ly-8, 5+cast*7, 5+cast*7, 'rgba(255,200,110,.85)', null); ctx.shadowBlur = 0; }
     // Crescent-crested helm with a burning T visor.
     for (const s of [-1,1]){
-        const g = ctx.createLinearGradient(0,-96,s*30,-136); g.addColorStop(0,'#8a5a1e'); g.addColorStop(1,'#ffe2a8');
         ctx.beginPath(); ctx.moveTo(s*10,-94); ctx.quadraticCurveTo(s*36,-104,s*32,-136); ctx.quadraticCurveTo(s*24,-110,s*4,-100); ctx.closePath();
-        ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = 'rgba(40,20,10,.6)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = K.grad(0,-96,s*30,-136,[[0,'#8a5a1e'],[1,'#ffe2a8']]); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.stroke();
     }
-    const hg = ctx.createLinearGradient(-18,-104,18,-58); hg.addColorStop(0,'#6a607a'); hg.addColorStop(1,'#17121d');
-    abShape([[-18,-100],[18,-100],[21,-72],[10,-58],[-10,-58],[-21,-72]], hg, '#c8913a', 2);
+    K.plate([[-18,-100],[18,-100],[21,-72],[10,-58],[-10,-58],[-21,-72]], '#7a7090', '#17121d', 2);
+    K.line([[-18,-99],[18,-99]], GOLD, 1.5); K.line([[0,-99],[0,-90]], 'rgba(0,0,0,.5)', 1.2);
+    for (const s of [-1,1]) K.line([[s*20,-74],[s*12,-62]], 'rgba(200,145,58,.7)', 1);
+    K.shape([[-15,-87],[15,-87],[15,-81],[3,-81],[3,-65],[-3,-65],[-3,-81],[-15,-81]], '#07040a', INK, 1);
     const eye = Math.min(1, .6 + cast*.4 + (b.phase >= 3 ? .2 : 0));
-    abGlow(10, M_SUN); abLine([[-13,-84],[13,-84]], `rgba(255,207,107,${eye})`, 3.2); abLine([[0,-84],[0,-66]], `rgba(255,207,107,${eye*.8})`, 2.4); ctx.shadowBlur = 0;
+    abGlow(10, M_SUN); K.line([[-13,-84],[13,-84]], `rgba(255,207,107,${eye})`, 3); K.line([[0,-84],[0,-67]], `rgba(255,207,107,${eye*.8})`, 2.2); ctx.shadowBlur = 0;
     // The greatsword: raised on wind-up, brought down on the strike, planted when he kneels.
     const swordRot = kneel ? 1.9 : .55 - cast*2.6 + strike*1.25;
     ctx.save(); ctx.translate(42,-36); ctx.rotate(swordRot);
-    abLine([[0,0],[12,24],[8,46]], '#0f0c14', 16); abLine([[0,0],[12,24],[8,46]], '#3b3346', 11); abOval(8,48,8,8,'#2a2433');
+    K.limb([0,0], [12,24], [8,46], 12, '#3b3346', { armor:GOLD, bands:1, trim:GOLD });
+    K.oval(8,48,8,8,K.metal(8,48,8,'#7a7090','#17121d'));
     ctx.translate(8,48); ctx.rotate(-.3);
-    abLine([[0,12],[0,-10]], '#2a1a12', 7); abOval(0,15,5,5,M_SUN);
+    K.inked([[0,12],[0,-10]], '#2a1a12', 6);
+    for (let i=0;i<4;i++) K.line([[-3,8-i*5],[3,5-i*5]], '#8a5a1e', 1);
+    K.oval(0,15,5,5,M_SUN,INK,0,1);
     ctx.beginPath(); ctx.moveTo(-24,-8); ctx.quadraticCurveTo(0,-26,24,-8); ctx.lineTo(18,-13); ctx.quadraticCurveTo(0,-19,-18,-13); ctx.closePath();
-    ctx.fillStyle = '#d9a55a'; ctx.fill();
-    const sg = ctx.createLinearGradient(0,-14,0,-196); sg.addColorStop(0,'#2a2433'); sg.addColorStop(1,'#0b0810');
+    ctx.fillStyle = K.metal(0,-12,24,'#ffe2a8','#8a5a1e'); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.stroke();
     abGlow(8 + cast*14, M_SUN);
-    abShape([[-11,-16],[11,-16],[9,-170],[0,-198],[-9,-170]], sg, M_SUN, 1.6);
+    K.shape([[-11,-16],[11,-16],[9,-170],[0,-198],[-9,-170]], K.grad(-11,0,11,0,[[0,'#3b3346'],[.5,'#120e17'],[1,'#2a2433']]), INK, 1.8);
     ctx.shadowBlur = 0;
+    K.line([[-10,-18],[-8,-168]], 'rgba(255,179,71,.6)', 1);
     const glow = Math.min(1, .45 + cast*.5 + strike*.3);
-    abLine([[0,-22],[0,-168]], `rgba(255,170,80,${glow})`, 2.5);
-    for (let i=0;i<5;i++){ const y = -40 - i*26; abLine([[-4,y],[0,y-6],[4,y]], `rgba(255,226,168,${glow*.8})`, 1.2); }
+    K.line([[0,-22],[0,-168]], `rgba(255,170,80,${glow})`, 2.5);
+    for (let i=0;i<5;i++){ const y = -40 - i*26; K.line([[-4,y],[0,y-6],[4,y]], `rgba(255,226,168,${glow*.8})`, 1.2); }
     ctx.restore();
-    ctx.restore();
+    ctx.restore(); K.ink(prevInk);
 }
 
 // ================================================================
@@ -884,12 +894,12 @@ function nFeather(x,y,ang,len,w,tip){
         fill.addColorStop(0,'#ffffff'); fill.addColorStop(.55,'#d6ecff'); fill.addColorStop(1,tip);
     }
     ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(len*.35,-w,len,-w*.12); ctx.quadraticCurveTo(len*.6,w*.75,0,0); ctx.closePath();
-    ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = 'rgba(40,70,120,.45)'; ctx.lineWidth = 1; ctx.stroke();
-    abLine([[len*.08,0],[len*.9,-w*.1]], 'rgba(120,160,210,.55)', 1);
+    ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = '#1d2f5c'; ctx.lineWidth = 1.3; ctx.stroke();
+    abLine([[len*.08,0],[len*.9,-w*.1]], 'rgba(60,90,140,.7)', 1);
+    for (let i=1;i<4;i++){ const q = i/4; abLine([[len*q,-w*.1*q],[len*q + len*.08,-w*.55*(1-q*.5)]], 'rgba(60,90,140,.35)', .7); }
     ctx.restore();
 }
-// One wing: an arm bone runs out from the shoulder and feathers hang along it. Feathers near the
-// body droop downward and the primaries at the tip follow the arm, so the wing reads as a wing.
+// One wing: an inked arm bone runs out from the shoulder and feathers hang along it.
 function nWing(s, armA, len, count, droop, tip){
     const sx = s*12, sy = -40, armL = len*.55, dx = Math.cos(armA), dy = Math.sin(armA), feathers = [];
     for (let i=0;i<count;i++){
@@ -901,20 +911,25 @@ function nWing(s, armA, len, count, droop, tip){
     for (let i=count-1;i>=0;i--){ const f = feathers[i]; ctx.lineTo(f.x + Math.cos(f.a)*f.L*.85, f.y + Math.sin(f.a)*f.L*.85); }
     ctx.closePath(); ctx.fillStyle = 'rgba(200,230,255,.22)'; ctx.fill();
     for (let i=0;i<count;i++){ const f = feathers[i]; nFeather(f.x, f.y, f.a, f.L, f.w, tip); }
-    abLine([[sx,sy],[wx,wy]], '#f4f9ff', 5); abOval(wx, wy, 3.5, 3.5, tip);
+    BossKit.inked([[sx,sy],[sx + s*dx*armL*.5, sy + dy*armL*.5 - 4],[wx,wy]], '#f4f9ff', 4);
+    BossKit.joint(wx, wy, 3.8, tip);
 }
 function drawNyxara(b){
-    const t = worldTime/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
+    const K = BossKit, t = worldTime/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
     const d = b.data && b.data.dash, diving = d && d.active, stun = b.stun > 0 ? 1 : 0, seed = Math.floor(worldTime/70), A0 = ctx.globalAlpha;
+    const INK = '#1d2f5c', prevInk = K.ink(INK);
     for (const g of b.ghosts || []){ ctx.save(); ctx.globalAlpha = A0*(1-g.age/320)*.35; abOval(g.x, g.y, 30, 46, M_SKY); ctx.restore(); }
     ctx.save();
     ctx.translate(b.x, b.y + Math.sin(t*2)*6 + stun*14);
     ctx.rotate(hit*.05 + (diving ? clamp((d.active.tx-d.active.fx)/400, -1, 1)*.4 : 0));
+    ctx.lineJoin = 'round';
     if (visualMode !== 'minimal'){
         const ag = ctx.createRadialGradient(0,-20,10,0,-20,150);
-        ag.addColorStop(0,'rgba(143,211,255,.35)'); ag.addColorStop(1,'rgba(143,211,255,0)');
+        ag.addColorStop(0,'rgba(143,211,255,.3)'); ag.addColorStop(1,'rgba(143,211,255,0)');
         ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(0,-20,150,0,AB_TAU); ctx.fill();
     }
+    // Storm rune ring behind her.
+    ctx.save(); ctx.translate(0,-30); ctx.scale(1,.5); K.runeRing(96, t*.2, 30, 'rgba(255,242,122,.45)'); ctx.restore();
     // Six wings in three pairs; they spread wide as she winds up and droop when she falters.
     const flap = Math.sin(t*3.2)*.16*(1-stun) - stun*.35, open = cast*.35 + strike*.15;
     for (const s of [-1,1]){
@@ -924,136 +939,155 @@ function drawNyxara(b){
     }
     // Long hair streams behind her like a storm cloud.
     const hw = Math.sin(t*2.2)*8;
-    const hg = ctx.createLinearGradient(0,-96,-40,-20); hg.addColorStop(0,'#ffffff'); hg.addColorStop(1,'rgba(185,214,245,.85)');
     ctx.beginPath(); ctx.moveTo(-12,-92); ctx.quadraticCurveTo(-30+hw,-70,-40+hw*1.4,-30);
     ctx.quadraticCurveTo(-22+hw,-46,-8,-56); ctx.quadraticCurveTo(14,-60,14,-88); ctx.closePath();
-    ctx.fillStyle = hg; ctx.fill();
-    // Flowing robe.
+    ctx.fillStyle = K.metal(-14,-60,30,'#ffffff','#b9d6f5'); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.stroke();
+    for (let i=0;i<3;i++) K.line([[-8-i*3,-84],[-22-i*4+hw*.6,-62],[-30-i*3+hw,-40]], 'rgba(90,120,170,.5)', .9);
+    // Flowing robe with folds, gold trim and a lightning sigil.
     const hem = i => 92 + Math.sin(t*2.4+i)*6;
-    const rg = ctx.createLinearGradient(0,-46,0,96);
-    rg.addColorStop(0,'#f4f9ff'); rg.addColorStop(.45,'#9cc6f2'); rg.addColorStop(1,'#1d2f5c');
     const robe = [[-14,-46],[14,-46],[24,0],[36,hem(0)]];
     for (let i=1;i<6;i++) robe.push([36-i*14.4, hem(i) + (i%2 ? 6 : 0)]);
     robe.push([-36,hem(6)],[-24,0]);
-    abShape(robe, rg, 'rgba(255,242,122,.6)', 1.2);
-    abLine([[-18,-4],[0,4],[18,-4]], M_INK, 3);
-    abLine([[0,4],[-4,40],[2,70]], 'rgba(255,217,138,.7)', 2);
-    // Left hand charges a storm orb.
-    abLine([[-12,-40],[-26,-16],[-36,8-cast*16]], '#9cc6f2', 9); abLine([[-12,-40],[-26,-16],[-36,8-cast*16]], '#e9f2ff', 6);
-    abOval(-37, 10-cast*16, 4, 4, '#f3f6ff');
-    if (cast > .1){ abGlow(18, M_BOLT); abOval(-40, 6-cast*16, 4+cast*8, 4+cast*8, 'rgba(255,248,180,.9)'); ctx.shadowBlur = 0; }
+    K.shape(robe, K.grad(0,-46,0,96,[[0,'#f4f9ff'],[.45,'#9cc6f2'],[1,'#1d2f5c']]), INK, 1.8);
+    for (let i=-2;i<=2;i++) if (i) K.line([[i*7,0],[i*14 + Math.sin(t*2.4+i)*3, 88]], 'rgba(29,47,92,.4)', 1.1);
+    K.line([[-24,0],[-36,hem(6)]], '#ffd98a', 1.2); K.line([[24,0],[36,hem(0)]], '#ffd98a', 1.2);
+    K.inked([[-18,-4],[0,4],[18,-4]], M_INK, 2.4);
+    abGlow(6, M_BOLT); K.line([[0,8],[-5,30],[3,32],[-3,58]], 'rgba(255,217,138,.9)', 1.8); ctx.shadowBlur = 0;
+    // Silver bodice and shoulder guards.
+    K.plate([[-14,-46],[14,-46],[12,-10],[0,-4],[-12,-10]], '#ffffff', '#9cb6d8', 1.6);
+    K.line([[-10,-30],[0,-25],[10,-30]], 'rgba(29,47,92,.45)', 1);
+    K.oval(0,-38,3.4,3.4,M_BOLT,INK,0,1);
+    for (const s of [-1,1]){ K.plate([[s*8,-48],[s*22,-50],[s*26,-38],[s*14,-34]], '#f4f9ff', '#8fb0d8'); K.rivet(s*18,-42,1.4,M_INK); }
+    // Left arm charges a storm orb.
+    const lh = [-36, 8-cast*16];
+    K.limb([-14,-40], [-26,-16], lh, 7, '#e9f2ff', { armor:'#c9dcf2', bands:2, trim:M_INK });
+    K.hand(lh[0], lh[1], -Math.PI/2 - .4, '#f3f6ff', .5 + cast*.5, .75);
+    if (cast > .1){ abGlow(18, M_BOLT); K.oval(-40, 2-cast*16, 4+cast*8, 4+cast*8, 'rgba(255,248,180,.9)', null); ctx.shadowBlur = 0; }
     // Lightning spear.
-    ctx.save(); ctx.translate(26,-30); ctx.rotate(-cast*1.1 + strike*.9);
-    abLine([[0,0],[8,22]], '#e9f2ff', 7);
-    ctx.translate(8,22);
-    abGlow(14, M_BOLT); abLine([[0,60],[0,-150]], '#fff9c9', 4); ctx.shadowBlur = 0;
+    ctx.save(); ctx.translate(16,-38); ctx.rotate(-cast*1.1 + strike*.9);
+    K.limb([0,0], [10,8], [16,30], 7, '#e9f2ff', { armor:'#c9dcf2', bands:1, trim:M_INK });
+    ctx.translate(18,30);
+    K.inked([[0,60],[0,-150]], '#fff4c0', 3.4);
+    abGlow(14, M_BOLT); K.line([[0,58],[0,-148]], '#fffbe0', 1.6); ctx.shadowBlur = 0;
     drawBolt(nBolt(0,60,0,-150,seed,9,6), 'rgba(255,242,122,.85)', 1.6);
-    abShape([[0,-184],[9,-150],[0,-140],[-9,-150]], '#ffffff', M_BOLT, 1.5);
+    K.plate([[-6,-140],[6,-140],[4,-132],[-4,-132]], '#ffe9a0', '#a8862a', 1);
+    K.shape([[0,-186],[10,-150],[0,-140],[-10,-150]], K.metal(0,-160,12,'#ffffff','#bcd8f2'), INK, 1.5);
+    K.line([[0,-182],[0,-144]], 'rgba(29,47,92,.5)', .8);
+    K.hand(0, -2, Math.PI, '#f3f6ff', .1, .75);
     ctx.restore();
     // Halo with arcing lightning.
     const hr = b.phase >= 3 ? 1.2 : 1;
     ctx.save(); ctx.translate(0,-98); ctx.scale(1,.32);
-    abGlow(14, M_BOLT); ctx.strokeStyle = '#ffe98a'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0,0,30*hr,0,AB_TAU); ctx.stroke(); ctx.shadowBlur = 0;
+    ctx.strokeStyle = INK; ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(0,0,30*hr,0,AB_TAU); ctx.stroke();
+    abGlow(14, M_BOLT); ctx.strokeStyle = '#ffe98a'; ctx.lineWidth = 4; ctx.stroke(); ctx.shadowBlur = 0;
     ctx.restore();
     for (let i=0;i<3;i++){
         const q = t*2 + i*AB_TAU/3;
         drawBolt(nBolt(Math.cos(q)*30*hr, -98+Math.sin(q)*10*hr, Math.cos(q+.9)*44, -104+Math.sin(q+.9)*16, seed+i, 4, 5), 'rgba(255,242,122,.8)', 1.2);
     }
-    const fg = ctx.createLinearGradient(0,-96,0,-62); fg.addColorStop(0,'#ffffff'); fg.addColorStop(1,'#cfe0f5');
-    abOval(0,-78,13,16,fg);
-    abLine([[-13,-84],[0,-90],[13,-84]], M_INK, 2.2); abOval(0,-89,2.6,2.6,M_BOLT);
+    // Head: neck, face with glowing eyes, a circlet with a storm gem.
+    K.oval(0,-62,4.5,6,'#e6eef8');
+    K.oval(0,-78,13,16,K.metal(0,-78,15,'#ffffff','#cfdcef'),INK,0,1.6);
+    K.inked([[-13,-84],[0,-90],[13,-84]], M_INK, 1.8); K.oval(0,-89.5,2.8,2.8,M_BOLT,INK,0,.9);
     const eg = .5 + cast*.5;
-    abGlow(8, M_SKY); abLine([[-8,-78],[-3,-77]], `rgba(143,211,255,${eg})`, 2.2); abLine([[3,-77],[8,-78]], `rgba(143,211,255,${eg})`, 2.2); ctx.shadowBlur = 0;
-    for (let i=0;i<5;i++){ const q = t*1.6 + i*AB_TAU/5; abOval(Math.cos(q)*78, -20+Math.sin(q)*34, 2.6, 2.6, i%2 ? M_BOLT : '#ffffff'); }
-    ctx.restore();
+    abGlow(8, M_SKY); K.line([[-8,-78],[-3,-77]], `rgba(143,211,255,${eg})`, 2.2); K.line([[3,-77],[8,-78]], `rgba(143,211,255,${eg})`, 2.2); ctx.shadowBlur = 0;
+    K.line([[0,-76],[-1,-71],[1,-70.5]], 'rgba(80,100,140,.6)', .9); K.line([[-3,-66.5],[3,-66.5]], '#8a7aa8', 1.1);
+    for (let i=0;i<5;i++){ const q = t*1.6 + i*AB_TAU/5; K.oval(Math.cos(q)*78, -20+Math.sin(q)*34, 2.6, 2.6, i%2 ? M_BOLT : '#ffffff', INK, 0, .8); }
+    ctx.restore(); K.ink(prevInk);
 }
 
 // ================================================================
 //  ART: THE ARCHITECT
 // ================================================================
 function drawArchitect(b){
-    const t = worldTime/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
+    const K = BossKit, t = worldTime/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
     const ph = b.phase || 1, stun = b.stun > 0, A0 = ctx.globalAlpha;
-    ctx.save(); ctx.translate(b.x, b.y + Math.sin(t*1.1)*5); ctx.rotate(hit*.03);
+    const INK = '#070b22', prevInk = K.ink(INK);
+    ctx.save(); ctx.translate(b.x, b.y + Math.sin(t*1.1)*5); ctx.rotate(hit*.03); ctx.lineJoin = 'round';
     if (stun) ctx.globalAlpha = A0*(.65 + .2*Math.sin(t*5));
     const A1 = ctx.globalAlpha;
     // Astrolabe rings behind it, turning faster while it casts.
     ctx.save(); ctx.translate(0,-40);
     for (const [r, sp, ticks, col] of [[128,.12,36,'rgba(255,217,138,.55)'],[100,-.2,24,'rgba(159,184,255,.5)'],[74,.32,12,'rgba(255,217,138,.7)']]){
         ctx.save(); ctx.rotate(t*sp*(1+cast*2));
-        ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(0,0,r,0,AB_TAU); ctx.stroke();
-        for (let i=0;i<ticks;i++){ const q = i*AB_TAU/ticks, l = i%3 ? 4 : 9; abLine([[Math.cos(q)*r, Math.sin(q)*r],[Math.cos(q)*(r-l), Math.sin(q)*(r-l)]], col, 1); }
-        for (let i=0;i<4;i++){ const q = i*AB_TAU/4 + .4; aPoly(Math.cos(q)*r, Math.sin(q)*r, 7, 3+i%3, t*2, M_INK, '#0a1030', 1.5); }
+        K.runeRing(r, 0, ticks, col, 1.2);
+        for (let i=0;i<4;i++){ const q = i*AB_TAU/4 + .4; aPoly(Math.cos(q)*r, Math.sin(q)*r, 7, 3+i%3, t*2, INK, M_INK, 1.5); }
         ctx.restore();
     }
     ctx.save(); ctx.rotate(-t*.4);
     aPoly(0,0,52,3,0,'rgba(255,217,138,.45)',null,1.2); aPoly(0,0,52,3,Math.PI,'rgba(255,217,138,.45)',null,1.2);
     ctx.restore();
     ctx.restore();
-    // Robe drawn like a blueprint.
-    const rg = ctx.createLinearGradient(0,-56,0,116);
-    rg.addColorStop(0,'#2a3a8a'); rg.addColorStop(.6,'#141d52'); rg.addColorStop(1,'#0a1030');
+    // Robe drawn like a blueprint, with an inked outline, side panels and fold lines.
     const robe = [[-24,-54],[24,-54],[40,20],[56,112],[-56,112],[-40,20]];
-    abShape(robe, rg, M_INK, 1.5);
-    ctx.save(); ctx.beginPath(); robe.forEach(([x,y],i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); ctx.closePath(); ctx.clip();
-    ctx.strokeStyle = 'rgba(159,184,255,.22)'; ctx.lineWidth = 1; ctx.beginPath();
+    K.shape(robe, K.grad(0,-56,0,116,[[0,'#2a3a8a'],[.6,'#141d52'],[1,'#0a1030']]), INK, 2);
+    ctx.save(); K.trace(robe); ctx.clip();
+    ctx.strokeStyle = 'rgba(159,184,255,.2)'; ctx.lineWidth = 1; ctx.beginPath();
     for (let x=-60;x<=60;x+=12){ ctx.moveTo(x,-60); ctx.lineTo(x,120); }
     for (let y=-60;y<=120;y+=12){ ctx.moveTo(-60,y); ctx.lineTo(60,y); }
     ctx.stroke();
     ctx.strokeStyle = 'rgba(255,217,138,.45)'; ctx.beginPath(); ctx.arc(0,40,34,0,AB_TAU); ctx.stroke();
     ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0,40,34,t,t+1.2); ctx.stroke();
-    abLine([[-40,40],[40,40]], 'rgba(255,217,138,.35)', 1); abLine([[0,0],[0,80]], 'rgba(255,217,138,.35)', 1);
+    K.line([[-40,40],[40,40]], 'rgba(255,217,138,.35)', 1); K.line([[0,0],[0,80]], 'rgba(255,217,138,.35)', 1);
+    for (const s of [-1,1]) K.line([[s*18,-40],[s*30,20],[s*44,110]], 'rgba(3,6,20,.6)', 2);
     ctx.restore();
+    K.line([[-56,112],[56,112]], M_INK, 1.4);
     // The hem comes apart into drifting squares.
     for (let i=0;i<16;i++){
         const q = (t*.5 + abHash(i)) % 1, x = -54 + abHash(i+7)*108 + Math.sin(t+i)*4, y = 108 + q*46, s = 3 + (i%3)*2;
         ctx.globalAlpha = A1*(1-q)*.8; ctx.fillStyle = i%3 ? '#141d52' : M_INK; ctx.fillRect(x, y, s, s);
+        ctx.strokeStyle = INK; ctx.lineWidth = .8; ctx.strokeRect(x, y, s, s);
     }
     ctx.globalAlpha = A1;
-    // Folded-paper mantle and a crown of floating triangles.
-    abShape([[-46,-50],[-10,-64],[0,-44],[10,-64],[46,-50],[36,-22],[0,-30],[-36,-22]], M_PAPER, '#c9a24a', 1.5);
-    abLine([[-10,-64],[-20,-26]], 'rgba(150,120,60,.5)', 1); abLine([[10,-64],[20,-26]], 'rgba(150,120,60,.5)', 1);
+    // Folded-paper mantle with creases, and a crown of floating triangles.
+    K.shape([[-46,-50],[-10,-64],[0,-44],[10,-64],[46,-50],[36,-22],[0,-30],[-36,-22]], K.metal(0,-44,40,'#fffaf0','#cbbd98'), INK, 1.8);
+    K.line([[-10,-64],[-20,-26]], 'rgba(120,95,50,.6)', 1); K.line([[10,-64],[20,-26]], 'rgba(120,95,50,.6)', 1);
+    K.line([[-46,-50],[-28,-38],[-36,-22]], 'rgba(120,95,50,.4)', 1); K.line([[46,-50],[28,-38],[36,-22]], 'rgba(120,95,50,.4)', 1);
+    K.line([[-40,-47],[-10,-60]], '#c9a24a', 1.2); K.line([[40,-47],[10,-60]], '#c9a24a', 1.2);
     for (let i=0;i<5;i++){
-        const q = (i-2)*.42, x = Math.sin(q)*34, y = -100 - Math.cos(q)*14 + Math.sin(t*2+i)*3;
-        abGlow(6, M_INK); aPoly(x, y, i === 2 ? 9 : 6, 3, -Math.PI/2, null, M_INK); ctx.shadowBlur = 0;
+        const q = (i-2)*.42, x = Math.sin(q)*34, y = -100 - Math.cos(q)*14 + Math.sin(t*2+i)*3, r = i === 2 ? 9 : 6;
+        aPoly(x, y, r, 3, -Math.PI/2, INK, M_INK, 1.4);
+        abGlow(6, M_INK); aPoly(x, y, r*.5, 3, -Math.PI/2, null, '#fff4d0'); ctx.shadowBlur = 0;
     }
     // Porcelain mask with a single eye glyph. It cracks in the later drafts.
-    const mg = ctx.createRadialGradient(-5,-90,3,0,-82,26); mg.addColorStop(0,'#ffffff'); mg.addColorStop(1,'#cfc6b0');
-    abOval(0,-82,18,23,mg);
-    ctx.strokeStyle = 'rgba(120,100,60,.6)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(0,-82,18,23,0,0,AB_TAU); ctx.stroke();
+    K.oval(0,-82,18,23,K.grad(-12,-104,12,-60,[[0,'#ffffff'],[1,'#cfc6b0']]),INK,0,1.8);
+    K.line([[-14,-90],[-6,-93]], 'rgba(120,100,60,.5)', 1); K.line([[14,-90],[6,-93]], 'rgba(120,100,60,.5)', 1);
     aPoly(0,-82,10,3,-Math.PI/2,M_INK,null,1.6);
     const eye = Math.min(1, .55 + cast*.45);
-    abGlow(10, M_INK); abOval(0,-80,4.2,2.6+cast*1.2,`rgba(255,217,138,${eye})`); ctx.shadowBlur = 0; abOval(0,-80,1.4,1.4,'#0a1030');
-    if (ph >= 3) abLine([[6,-102],[3,-92],[8,-86],[4,-78]], 'rgba(60,40,20,.7)', 1.2);
+    abGlow(10, M_INK); K.oval(0,-80,4.2,2.6+cast*1.2,`rgba(255,217,138,${eye})`,INK,0,.8); ctx.shadowBlur = 0; K.oval(0,-80,1.4,1.4,'#0a1030',null);
+    if (ph >= 3) K.line([[6,-102],[3,-92],[8,-86],[4,-78]], 'rgba(60,40,20,.75)', 1.3);
     if (ph >= 4){
-        abLine([[-8,-98],[-4,-88],[-9,-80],[-6,-70]], 'rgba(60,40,20,.7)', 1.2);
-        const drip = (t*.6) % 1; abLine([[0,-77],[0,-77+drip*24]], 'rgba(150,20,40,.85)', 2); abOval(0,-77+drip*24,2,2.6,'rgba(150,20,40,.85)');
+        K.line([[-8,-98],[-4,-88],[-9,-80],[-6,-70]], 'rgba(60,40,20,.75)', 1.3);
+        const drip = (t*.6) % 1; K.line([[0,-77],[0,-77+drip*24]], 'rgba(150,20,40,.85)', 2); K.oval(0,-77+drip*24,2,2.6,'rgba(150,20,40,.85)',null);
     }
-    // Floating hands: a quill in the left, a drafting compass in the right.
+    // Floating gauntleted hands: a quill in the left, a drafting compass in the right.
     for (const s of [-1,1]){
         const hx = s*(74 + cast*6), hy = -6 - cast*34 + Math.sin(t*1.7+s)*6 - strike*s*8;
         ctx.save(); ctx.translate(hx, hy); ctx.rotate(s*.2);
-        abGlow(8, M_INK); aPoly(0,0,11,4,Math.PI/4,M_INK,M_PAPER,1.4); ctx.shadowBlur = 0;
-        for (let f=0;f<3;f++) abLine([[-6+f*6,-8],[-7+f*6,-18],[-6+f*6,-24]], M_PAPER, 3);
+        // A floating cuff of folded paper.
+        K.plate([[-9,10],[9,10],[7,22],[-7,22]], '#fffaf0', '#c4b48a', 1.2);
+        K.line([[-8,14],[8,14]], '#c9a24a', 1);
+        abGlow(6, M_INK); K.hand(0, 4, -Math.PI/2, M_PAPER, .55 + cast*.35, 1.1); ctx.shadowBlur = 0;
         if (s < 0){
-            ctx.save(); ctx.rotate(-.5);
+            ctx.save(); ctx.translate(0,-8); ctx.rotate(-.5);
             ctx.beginPath(); ctx.moveTo(0,10); ctx.quadraticCurveTo(-16,-30,2,-76); ctx.quadraticCurveTo(12,-30,0,10); ctx.closePath();
-            ctx.fillStyle = M_PAPER; ctx.fill(); ctx.strokeStyle = M_INK; ctx.lineWidth = 1.2; ctx.stroke();
-            abLine([[0,8],[1,-70]], 'rgba(201,162,74,.8)', 1);
-            abLine([[0,10],[0,26]], M_INK, 2); abShape([[-2.5,24],[2.5,24],[0,34]], M_INK);
+            ctx.fillStyle = K.grad(-10,0,10,0,[[0,'#d8ccb0'],[.5,'#fffaf0'],[1,'#c4b48a']]); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.stroke();
+            K.line([[0,8],[1,-70]], 'rgba(201,162,74,.85)', 1);
+            for (let i=1;i<6;i++){ const y = 4 - i*12; K.line([[0.5,y],[-6,y-6]], 'rgba(120,95,50,.5)', .7); K.line([[0.5,y],[5,y-5]], 'rgba(120,95,50,.5)', .7); }
+            K.inked([[0,10],[0,26]], M_INK, 2); K.shape([[-3,24],[3,24],[0,35]], K.metal(0,28,4,'#fff0b0','#8a5a0c'), INK, 1);
             ctx.restore();
         } else {
-            ctx.save(); ctx.rotate(.3);
+            ctx.save(); ctx.translate(0,-8); ctx.rotate(.3);
             const spread = .25 + cast*.35;
-            abLine([[0,-30],[Math.sin(-spread)*56, -30+Math.cos(spread)*56]], M_INK, 2.4);
-            abLine([[0,-30],[Math.sin(spread)*56, -30+Math.cos(spread)*56]], M_INK, 2.4);
-            abOval(0,-30,4,4,M_INK);
+            K.inked([[0,-30],[Math.sin(-spread)*56, -30+Math.cos(spread)*56]], M_INK, 2.2);
+            K.inked([[0,-30],[Math.sin(spread)*56, -30+Math.cos(spread)*56]], M_INK, 2.2);
+            K.oval(0,-30,4.5,4.5,K.metal(0,-30,4.5,'#fff0b0','#8a5a0c'),INK,0,1.2);
             ctx.restore();
         }
         ctx.restore();
     }
     if (cast > .15){ ctx.strokeStyle = `rgba(255,217,138,${cast*.8})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0,-40,100,-Math.PI/2-cast*2,-Math.PI/2+cast*2); ctx.stroke(); }
-    ctx.restore();
+    ctx.restore(); K.ink(prevInk);
     if (stun){ ctx.save(); ctx.fillStyle = M_INK; ctx.font = 'bold 13px Georgia, serif'; ctx.textAlign = 'center'; ctx.fillText('UNWRITTEN', b.x, b.y - 150); ctx.restore(); }
 }
 function mDecoy(f){

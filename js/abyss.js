@@ -1048,152 +1048,240 @@ drawBackground = function(){
 
 // ================================================================
 //  NEW BOSS MODELS
+//  Drawn with BossKit (js/boss-art.js) so they share the first bosses' look: ink outlines,
+//  metal sheen, articulated limbs with armoured joints, engraved detail and rune rings.
 // ================================================================
 function drawSelene(b){
-    const t = worldTime/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
+    const K = BossKit, t = worldTime/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
+    const INK = '#0c1630', prevInk = K.ink(INK), red = b.phase >= 3;
     ctx.save(); ctx.translate(b.x, b.y + Math.sin(t*1.6)*6); ctx.rotate(Math.sin(t*.7)*.03 + hit*.05); ctx.lineJoin = 'round';
-    // Hollow moon halo with tide runes.
-    ctx.save(); ctx.translate(0,-60); ctx.rotate(t*.15);
-    const R = 58 + cast*8;
-    ctx.beginPath(); ctx.arc(0,0,R,0,AB_TAU); ctx.arc(0,0,R*.76,0,AB_TAU,true);
-    const hg = ctx.createLinearGradient(-R,-R,R,R); hg.addColorStop(0,'#f2f7ff'); hg.addColorStop(1,'#7f9cc4');
-    ctx.fillStyle = hg; ctx.fill();
-    ctx.save(); ctx.beginPath(); ctx.arc(0,0,R,0,AB_TAU); ctx.arc(0,0,R*.76,0,AB_TAU,true); ctx.clip();
-    abOval(R*.45,-R*.15,R*.95,R*.95,'rgba(6,18,40,.55)'); ctx.restore();
-    for (let i=0;i<24;i++){ const q = i*AB_TAU/24; abLine([[Math.cos(q)*(R+4),Math.sin(q)*(R+4)],[Math.cos(q)*(R+9),Math.sin(q)*(R+9)]], 'rgba(159,227,255,.6)', 1); }
+    // Moon-dial behind her: two turning rune rings and a hollow silver moon engraved with its phases.
+    ctx.save(); ctx.translate(0,-60);
+    K.runeRing(78 + cast*8, t*.12, 28, 'rgba(159,227,255,.7)');
+    K.runeRing(66 + cast*6, -t*.18, 20, 'rgba(120,160,210,.75)');
+    const R = 54 + cast*6;
+    ctx.beginPath(); ctx.arc(0,0,R,0,AB_TAU); ctx.arc(0,0,R*.8,0,AB_TAU,true);
+    ctx.fillStyle = K.metal(0,0,R,'#f4f8ff','#7f9cc4'); ctx.fill();
+    ctx.save(); ctx.clip(); K.oval(R*.5,-R*.2,R*.95,R*.95,'rgba(8,20,45,.5)',null); ctx.restore();
+    K.oval(0,0,R,R,null,INK,0,1.6); K.oval(0,0,R*.8,R*.8,null,INK,0,1.2);
+    for (let i=0;i<8;i++){
+        const q = i*AB_TAU/8 + t*.15, x = Math.cos(q)*R*.9, y = Math.sin(q)*R*.9;
+        K.oval(x,y,3.4,3.4,'#e8f2ff',INK,0,.8); K.oval(x + Math.cos(i*.8)*1.8, y, 2.6, 3, 'rgba(12,22,48,.65)', null);
+    }
     ctx.restore();
     // Water tendrils below the robe.
     for (let i=0;i<5;i++){
-        const x0 = (i-2)*10, sw = Math.sin(t*2+i)*14;
-        abLine([[x0,60],[x0*1.4+sw*.5,100],[x0*1.8+sw,140+Math.sin(t*1.3+i)*8]], 'rgba(47,127,150,.7)', 7-i*.6);
-        abLine([[x0,60],[x0*1.4+sw*.5,100],[x0*1.8+sw,140+Math.sin(t*1.3+i)*8]], 'rgba(159,227,255,.45)', 1.5);
+        const x0 = (i-2)*10, sw = Math.sin(t*2+i)*14, pts = [[x0,60],[x0*1.4+sw*.5,100],[x0*1.8+sw,140+Math.sin(t*1.3+i)*8]];
+        K.inked(pts, '#2f7f96', 7-i*.6); K.line(pts, 'rgba(190,240,255,.55)', 1.3);
     }
-    // Silver hair streams behind her.
+    // Silver hair streaming behind her, with strands.
     const hs = Math.sin(t*1.4)*8;
-    abShape([[-6,-66],[-30,-40+hs*.3],[-52,0+hs],[-58,40+hs*1.4],[-36,20+hs],[-20,-20],[-4,-40]], '#dbe4f4', 'rgba(120,150,190,.5)', 1);
-    // Robe with drifting star motes.
+    K.shape([[-6,-66],[-30,-40+hs*.3],[-52,hs],[-58,40+hs*1.4],[-36,20+hs],[-20,-20],[-4,-40]], K.metal(-30,-10,40,'#f6f9ff','#a9b8d6'));
+    for (let i=0;i<4;i++) K.line([[-8-i*4,-58],[-26-i*6,-14+hs*.6],[-38-i*4,24+hs*1.2]], 'rgba(90,110,150,.55)', 1);
+    // Layered robe: outer mantle, a front panel with gold trim, folds and a tide pattern at the hem.
     const hem = Math.sin(t*2.2)*6;
-    const rg = ctx.createLinearGradient(0,-30,0,96); rg.addColorStop(0,'#1a2d5c'); rg.addColorStop(1,'#1f6f86');
-    abShape([[-18,-30],[18,-30],[34,40],[46,92+hem],[18,84],[0,98-hem],[-20,86],[-46,94-hem],[-32,40]], rg, '#0b1730', 1.5);
-    for (let i=0;i<9;i++){ ctx.globalAlpha = .4+.4*Math.sin(t*2+i); abOval((abHash(i)-.5)*60, 10+abHash(i+7)*70, 1.4, 1.4, '#e8f6ff'); }
+    K.shape([[-18,-30],[18,-30],[34,40],[46,92+hem],[18,84],[0,98-hem],[-20,86],[-46,94-hem],[-32,40]], K.grad(0,-30,0,96,[[0,'#24407a'],[1,'#1a5f78']]), INK, 1.8);
+    for (let i=-3;i<=3;i++) if (i) K.line([[i*6,0],[i*13 + Math.sin(t*2+i)*2, 84]], 'rgba(8,16,40,.5)', 1.1);
+    K.shape([[-10,-4],[10,-4],[16,88-hem*.5],[0,96-hem],[-16,88+hem*.5]], K.metal(0,46,44,'#3e70ae','#1b3563'));
+    K.line([[-10,-4],[-16,88+hem*.5]], '#d9c58a', 1.4); K.line([[10,-4],[16,88-hem*.5]], '#d9c58a', 1.4);
+    K.line([[-14,66],[-7,62],[0,66],[7,62],[14,66]], 'rgba(159,227,255,.8)', 1.2);
+    K.line([[-15,76],[-7,72],[0,76],[7,72],[15,76]], 'rgba(159,227,255,.6)', 1);
+    for (let i=0;i<9;i++){ ctx.globalAlpha = .4 + .4*Math.sin(t*2+i); K.oval((abHash(i)-.5)*60, 10+abHash(i+7)*70, 1.4, 1.4, '#e8f6ff', null); }
     ctx.globalAlpha = 1;
-    // Arms: rest at the sides, rise during the wind-up, thrust forward on release.
+    // Belt with a moonstone clasp.
+    K.plate([[-22,-3],[22,-3],[20,6],[-20,6]], '#efe0aa', '#8a7440', 1.2);
+    K.oval(0,1.5,4.5,4.5,'#9fe3ff',INK,0,1); K.oval(-1.2,.3,1.6,1.6,'rgba(255,255,255,.7)',null);
+    // Arms: rest at her sides, rise during the wind-up, thrust forward on release.
     for (const s of [-1,1]){
         const hx = s*(30 + cast*14 + strike*20), hy = 6 - cast*56 + strike*30;
-        abLine([[s*16,-26],[s*(24+cast*6),-10-cast*24],[hx,hy]], '#24407a', 9);
-        abOval(hx,hy,4.5,4.5,'#eef2fa');
-        ctx.save(); ctx.translate(hx,hy-8); abGlow(10,'#9fe3ff');
-        ctx.beginPath(); ctx.arc(0,0,8,-1.2,1.2); ctx.arc(-3,0,6.5,1.1,-1.1,true); ctx.fillStyle = '#e4f2ff'; ctx.fill();
-        ctx.shadowBlur = 0; ctx.restore();
+        const el = [s*(28 + cast*6), -10 - cast*24 + strike*8];
+        K.limb([s*18,-26], el, [hx,hy], 8, '#2b4c8c', { armor:'#c9d6ea', bands:2, trim:'#d9c58a' });
+        K.hand(hx, hy, Math.atan2(hy-el[1], hx-el[0]), '#eef2fa', .75 + cast*.25, .8);
+        ctx.save(); ctx.translate(hx, hy-12);
+        if (cast > .1) abGlow(8 + cast*10, '#9fe3ff');
+        ctx.beginPath(); ctx.arc(0,0,8,-1.2,1.2); ctx.arc(-3,0,6.5,1.1,-1.1,true); ctx.closePath();
+        ctx.fillStyle = '#e4f2ff'; ctx.fill(); ctx.shadowBlur = 0; ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.stroke();
+        ctx.restore();
     }
-    abShape([[-14,-32],[14,-32],[10,0],[-10,0]], '#2a4a86', '#0b1730', 1);
-    abLine([[0,-30],[0,-4]], '#9fe3ff', 1.5);
-    // Head with a crescent diadem and closed, glowing eyes.
-    abOval(0,-48,12,15,'#e9eef7');
-    abGlow(6,'#9fe3ff'); abLine([[-7,-50],[-2,-49]], '#9fe3ff', 1.6); abLine([[2,-49],[7,-50]], '#9fe3ff', 1.6); ctx.shadowBlur = 0;
-    ctx.beginPath(); ctx.arc(0,-64,7,Math.PI*.15,Math.PI*.85,true); ctx.strokeStyle = '#cfe3ff'; ctx.lineWidth = 2.5; ctx.stroke();
-    // Orbiting moons, red in the final phase.
+    // Bodice and crescent pauldrons.
+    K.plate([[-16,-34],[16,-34],[13,-2],[0,4],[-13,-2]], '#dce7f6', '#5a7aa8', 1.6);
+    K.line([[0,-30],[0,0]], 'rgba(20,40,80,.55)', 1);
+    K.line([[-12,-22],[0,-16],[12,-22]], 'rgba(20,40,80,.45)', 1);
+    K.oval(0,-20,5,5,'#9fe3ff',INK,0,1); K.oval(2,-21,4,4,'#6f8cb8',null);
+    for (const s of [-1,1]){
+        K.plate([[s*10,-36],[s*26,-41],[s*35,-28],[s*25,-20],[s*12,-26]], '#eef4ff', '#7d95bd');
+        K.line([[s*14,-34],[s*29,-30]], 'rgba(20,40,80,.5)', 1);
+        K.rivet(s*25,-29,1.5,'#d9c58a');
+    }
+    K.plate([[-10,-37],[10,-37],[6,-31],[-6,-31]], '#f2e2a8', '#8a7440', 1);
+    // Head: neck, face with closed glowing eyes, silver hair cap and a crescent diadem.
+    K.oval(0,-38,5,6,'#dde5f2');
+    K.oval(0,-48,12,15,K.metal(0,-48,14,'#f8fafd','#c4cee0'),INK,0,1.6);
+    abGlow(6,'#9fe3ff');
+    K.line([[-8,-50],[-5,-48.6],[-2,-50]], '#7fd0ff', 1.6); K.line([[2,-50],[5,-48.6],[8,-50]], '#7fd0ff', 1.6);
+    ctx.shadowBlur = 0;
+    K.line([[0,-47],[-1,-42.5],[1,-41.5]], 'rgba(80,90,120,.6)', 1); K.line([[-3,-37.5],[0,-36.6],[3,-37.5]], '#8a6a8a', 1.2);
+    K.shape([[-13,-50],[-12,-60],[-4,-64],[6,-63],[13,-56],[12,-47],[8,-55],[0,-57],[-8,-54]], K.metal(0,-58,14,'#ffffff','#b9c6de'), INK, 1.2);
+    ctx.beginPath(); ctx.arc(0,-66,8,Math.PI*.1,Math.PI*.9,true);
+    ctx.strokeStyle = INK; ctx.lineWidth = 4.6; ctx.stroke(); ctx.strokeStyle = '#ecdca4'; ctx.lineWidth = 2.6; ctx.stroke();
+    K.shape([[0,-77],[3,-71],[0,-67.5],[-3,-71]], '#9fe3ff', INK, 1);
+    // Orbiting moons, blood red in the final phase.
     for (let i=0;i<3;i++){
-        const q = t*.6 + i*AB_TAU/3;
-        abOval(Math.cos(q)*84, -10+Math.sin(q)*34, 7, 7, b.phase >= 3 ? '#ff9aa8' : '#d7e6ff');
-        abOval(Math.cos(q)*84+2, -12+Math.sin(q)*34, 5, 5, 'rgba(6,18,40,.5)');
+        const q = t*.6 + i*AB_TAU/3, x = Math.cos(q)*84, y = -10 + Math.sin(q)*34;
+        K.oval(x,y,7,7,K.metal(x,y,7,red ? '#ffb0bc' : '#e8f0ff', red ? '#a03848' : '#7f96c0'),INK,0,1.2);
+        K.oval(x+2,y-2,4.4,4.4,'rgba(6,18,40,.45)',null); K.oval(x-2.6,y+2.4,1.3,1.3,'rgba(6,18,40,.45)',null);
     }
-    ctx.restore();
+    ctx.restore(); K.ink(prevInk);
 }
 
 function drawVael(b){
-    const t = worldTime/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
+    const K = BossKit, t = worldTime/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
+    const INK = '#121d2b', prevInk = K.ink(INK);
     ctx.save(); ctx.translate(b.x, b.y + Math.sin(t*1.2)*3); ctx.rotate(hit*.035); ctx.lineJoin = 'round';
     // Floating ice slab with hanging icicles.
-    abShape([[-80,92],[-60,80],[60,78],[84,92],[60,104],[-56,106]], '#a9d8ee', '#e8fbff', 1.5);
-    for (let i=0;i<8;i++){ const x = -60+i*17; abShape([[x-5,104],[x,118+(i%3)*8+Math.sin(t*2+i)],[x+5,104]], '#cdeefc'); }
-    // Cape.
+    K.shape([[-80,92],[-60,80],[60,78],[84,92],[60,104],[-56,106]], K.metal(0,92,70,'#eefaff','#7fb8d6'), INK, 1.8);
+    K.line([[-60,83],[-22,92],[8,84],[50,93]], 'rgba(255,255,255,.65)', 1);
+    for (let i=0;i<8;i++){ const x = -60+i*17; K.shape([[x-5,104],[x,118+(i%3)*8+Math.sin(t*2+i)],[x+5,104]], K.grad(x,104,x,126,[[0,'#eafbff'],[1,'#7fc4e6']]), INK, 1); }
+    // Cape with an inner trim line and heavy folds.
     const cs = Math.sin(t*1.5)*6;
-    const cg = ctx.createLinearGradient(0,-50,0,90); cg.addColorStop(0,'#1d3557'); cg.addColorStop(1,'#0f1f38');
-    abShape([[-36,-50],[36,-50],[60,40+cs],[52,84-cs],[0,78],[-52,84+cs],[-60,40-cs]], cg, '#bfe6ff', 1.5);
-    // Legs.
+    K.shape([[-36,-50],[36,-50],[60,40+cs],[52,84-cs],[0,78],[-52,84+cs],[-60,40-cs]], K.grad(0,-50,0,90,[[0,'#24406a'],[1,'#0f1f38']]), INK, 2);
+    K.shape([[-31,-44],[31,-44],[52,40+cs],[45,77-cs],[0,72],[-45,77+cs],[-52,40-cs]], null, 'rgba(191,230,255,.35)', 1);
+    for (let i=-2;i<=2;i++) K.line([[i*12,-40],[i*20 + Math.sin(t*1.5+i)*3, 72]], 'rgba(5,12,24,.5)', 1.2);
+    // Legs: armoured knees, greaves and sabatons.
     for (const s of [-1,1]){
-        abLine([[s*16,24],[s*20,54],[s*22,82]], '#2a3b4f', 20); abLine([[s*16,24],[s*20,54],[s*22,82]], '#7d98b3', 14);
-        abOval(s*20,54,7,7,'#b9d1e6'); abOval(s*24,84,14,6,'#56708a');
+        const step = Math.sin(t*1.6+s)*2;
+        K.limb([s*16,24], [s*20,54+step], [s*22,82], 15, '#6d88a4', { armor:'#b9d1e6' });
+        K.plate([[s*20-9,58+step],[s*20+9,58+step],[s*22+8,77],[s*22-8,77]], '#dbe8f3', '#56708a', 1.2);
+        K.oval(s*24+2,85,14,6,K.metal(s*24,85,14,'#a6bed2','#3e566e'));
     }
-    // Breastplate with frost rune.
-    const bg = ctx.createLinearGradient(-34,-46,34,30); bg.addColorStop(0,'#d6e6f2'); bg.addColorStop(1,'#56708a');
-    abShape([[-34,-46],[34,-46],[28,20],[0,34],[-28,20]], bg, '#22344a', 2);
-    abGlow(8,'#7fe0ff'); abLine([[0,-36],[0,18]], '#7fe0ff', 2); abLine([[-12,-14],[0,-6],[12,-14]], '#7fe0ff', 1.5); ctx.shadowBlur = 0;
-    for (let i=0;i<7;i++) abOval(-30+i*10,-48,7,6,'#eef6fb');
-    // Left arm gathers frost during wind-up.
+    // Hip plates.
+    for (let i=0;i<4;i++){ const x = -24+i*12; K.plate([[x,16],[x+12,16],[x+11,33],[x+1,33]], '#cfe0ee', '#56708a', 1.2); }
+    // Breastplate with pecs, ab plates and a glowing frost rune.
+    K.plate([[-34,-46],[34,-46],[28,20],[0,34],[-28,20]], '#e6f0f8', '#56708a', 2.2);
+    K.line([[-26,-22],[0,-13],[26,-22]], 'rgba(18,29,43,.55)', 1.2);
+    for (let r=0;r<3;r++) K.line([[-15+r*2,2+r*8],[15-r*2,2+r*8]], 'rgba(18,29,43,.45)', 1);
+    abGlow(8,'#7fe0ff');
+    K.line([[0,-36],[0,18]], '#7fe0ff', 2); K.line([[-12,-14],[0,-6],[12,-14]], '#7fe0ff', 1.5); K.line([[-8,6],[0,11],[8,6]], '#7fe0ff', 1.2);
+    ctx.shadowBlur = 0;
+    // Frost collar.
+    for (let i=0;i<7;i++){ const x = -30+i*10; K.oval(x,-48,7,6,K.metal(x,-48,7,'#ffffff','#bcd8ea'),INK,0,1); }
+    // Layered ice pauldrons with spikes.
+    for (const s of [-1,1]){
+        K.plate([[s*24,-52],[s*52,-56],[s*60,-38],[s*46,-26],[s*28,-34]], '#eef8ff', '#5f7f9c');
+        K.plate([[s*30,-49],[s*52,-51],[s*54,-41],[s*32,-39]], '#ffffff', '#8fb0c8', 1);
+        K.shape([[s*39,-54],[s*45,-78],[s*50,-54]], K.grad(0,-78,0,-54,[[0,'#ffffff'],[1,'#9fd8f2']]), INK, 1);
+        K.shape([[s*52,-52],[s*65,-70],[s*58,-46]], K.grad(0,-70,0,-46,[[0,'#ffffff'],[1,'#9fd8f2']]), INK, 1);
+        K.rivet(s*36,-41,1.5,'#bfe6ff'); K.rivet(s*48,-39,1.5,'#bfe6ff');
+    }
+    // Left arm: a clawed gauntlet that gathers frost during the wind-up.
     const lx = -50 - cast*10, ly = -6 - cast*30;
-    abLine([[-38,-40],[-50,-20],[lx,ly]], '#56708a', 14);
-    abOval(lx,ly,7,7,'#cfe3ef');
-    if (cast > .1){ abGlow(14,'#9fe9ff'); abOval(lx-4,ly-10,6+cast*6,6+cast*6,'rgba(200,245,255,.8)'); ctx.shadowBlur = 0; }
+    K.limb([-40,-40], [-52,-18], [lx,ly], 13, '#6d88a4', { armor:'#b9d1e6', bands:1, trim:'#bfe6ff' });
+    K.claw(lx, ly, -Math.PI/2 - .5 - cast*.3, '#8fa9c0', '#e8fbff');
+    if (cast > .1){ abGlow(14,'#9fe9ff'); K.oval(lx-4, ly-16, 6+cast*6, 6+cast*6, 'rgba(200,245,255,.85)', null); ctx.shadowBlur = 0; }
     // Right arm and the greatsword: raised overhead on wind-up, slammed down on strike.
     const swordRot = .35 - cast*2.4 + strike*1.1;
     ctx.save(); ctx.translate(38,-40); ctx.rotate(swordRot);
-    abLine([[0,0],[14,22],[10,44]], '#56708a', 14); abOval(10,46,7,7,'#cfe3ef');
+    K.limb([0,0], [14,22], [10,44], 13, '#6d88a4', { armor:'#b9d1e6', bands:1, trim:'#bfe6ff' });
+    K.oval(10,47,8,7,K.metal(10,47,8,'#d6e8f2','#56708a'));
     ctx.translate(10,46); ctx.rotate(-.35);
-    abLine([[0,8],[0,-12]], '#3a2a1e', 6); abShape([[-16,-12],[16,-12],[12,-18],[-12,-18]], '#9fb7c9');
-    const sg = ctx.createLinearGradient(-10,-18,10,-170); sg.addColorStop(0,'#bfefff'); sg.addColorStop(1,'rgba(230,250,255,.75)');
-    abGlow(6,'#9fe9ff'); abShape([[-10,-18],[10,-18],[8,-150],[0,-172],[-8,-150]], sg, '#ffffff', 1); ctx.shadowBlur = 0;
-    abLine([[0,-24],[0,-150]], 'rgba(255,255,255,.7)', 1.5);
+    K.inked([[0,10],[0,-12]], '#5a3e28', 5);
+    for (let i=0;i<4;i++) K.line([[-2.5,6-i*5],[2.5,3-i*5]], '#c9a26a', 1);
+    K.oval(0,13,4,4,'#9fe9ff',INK,0,1);
+    K.plate([[-18,-12],[18,-12],[13,-19],[-13,-19]], '#eef6fb', '#5f7f9c', 1.4);
+    abGlow(6,'#9fe9ff');
+    K.shape([[-10,-19],[10,-19],[8,-150],[0,-172],[-8,-150]], K.grad(-10,0,10,0,[[0,'#8fd6f2'],[.5,'#f4fdff'],[1,'#6fb8d8']]), INK, 1.6);
+    ctx.shadowBlur = 0;
+    K.line([[0,-24],[0,-150]], 'rgba(60,120,160,.55)', 1.8);
+    for (let i=0;i<4;i++){ const y = -44 - i*28; K.line([[-4,y],[0,y-6],[4,y]], 'rgba(127,224,255,.85)', 1.2); }
     ctx.restore();
-    // Helm, crown of icicles, frozen beard and glowing visor.
-    abShape([[-18,-84],[18,-84],[20,-60],[0,-50],[-20,-60]], '#8fa9c0', '#22344a', 2);
-    for (let i=0;i<5;i++){ const x = -16+i*8, h = [14,20,28,20,14][i] + Math.sin(t*2+i)*1.5; abShape([[x-4,-84],[x,-84-h],[x+4,-84]], '#dff6ff', '#ffffff', 1); }
-    abGlow(8,'#7fe0ff'); abLine([[-12,-70],[12,-70]], '#7fe0ff', 3); ctx.shadowBlur = 0;
-    for (let i=0;i<5;i++) abShape([[-14+i*7,-56],[-10.5+i*7,-42-(i%2)*6],[-7+i*7,-56]], '#f2fbff');
-    if (visualMode !== 'minimal'){ const m = (t*.8)%1; ctx.globalAlpha = (1-m)*.35; abOval(16+m*20,-60-m*10,6+m*8,4+m*5,'#eaf8ff'); ctx.globalAlpha = 1; }
-    ctx.restore();
+    // Helm: ridged dome, cheek guards, glowing visor, icicle crown and a frozen beard.
+    K.plate([[-18,-84],[18,-84],[20,-60],[0,-50],[-20,-60]], '#dbe8f3', '#4f6a86', 2);
+    K.line([[0,-84],[0,-74]], 'rgba(18,29,43,.6)', 1.2);
+    K.shape([[-14,-74],[14,-74],[12,-66],[-12,-66]], '#08111c', INK, 1);
+    abGlow(8,'#7fe0ff'); K.line([[-11,-70],[11,-70]], '#7fe0ff', 2.4); ctx.shadowBlur = 0;
+    for (const s of [-1,1]) K.plate([[s*16,-66],[s*23,-60],[s*15,-53]], '#eef6fb', '#56708a', 1);
+    for (let i=0;i<5;i++){
+        const x = -16+i*8, h = [14,20,28,20,14][i] + Math.sin(t*2+i)*1.5;
+        K.shape([[x-4,-84],[x,-84-h],[x+4,-84]], K.grad(0,-84-h,0,-84,[[0,'#ffffff'],[1,'#a6dcf2']]), INK, 1);
+    }
+    for (let i=0;i<5;i++) K.shape([[-14+i*7,-56],[-10.5+i*7,-42-(i%2)*6],[-7+i*7,-56]], '#f2fbff', INK, .9);
+    if (visualMode !== 'minimal'){ const m = (t*.8)%1; ctx.globalAlpha = (1-m)*.35; K.oval(16+m*20,-60-m*10,6+m*8,4+m*5,'#eaf8ff',null); ctx.globalAlpha = 1; }
+    ctx.restore(); K.ink(prevInk);
 }
 
 function drawHorologue(b){
-    const t = worldTime/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
-    const frozen = b.timeStop > 0;
+    const K = BossKit, t = worldTime/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
+    const frozen = b.timeStop > 0, INK = '#22140a', prevInk = K.ink(INK);
+    const brass = (x,y,r) => K.metal(x,y,r,'#f6d58c','#7a5220');
     ctx.save(); ctx.translate(b.x, b.y + Math.sin(t*1.8)*5); ctx.rotate(hit*.04); ctx.lineJoin = 'round';
     // Halo of roman ticks behind the head.
     ctx.save(); ctx.translate(0,-66); ctx.rotate(-t*.2);
-    ctx.strokeStyle = 'rgba(242,196,107,.55)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(0,0,48,0,AB_TAU); ctx.stroke();
-    for (let i=0;i<12;i++){ const q = i*AB_TAU/12; abLine([[Math.cos(q)*42,Math.sin(q)*42],[Math.cos(q)*52,Math.sin(q)*52]], '#f2c46b', i%3 ? 1.5 : 3); }
+    K.runeRing(50, 0, 24, 'rgba(242,196,107,.65)');
+    for (let i=0;i<12;i++){ const q = i*AB_TAU/12; K.inked([[Math.cos(q)*41,Math.sin(q)*41],[Math.cos(q)*53,Math.sin(q)*53]], '#f2c46b', i%3 ? 1.4 : 3); }
     ctx.restore();
-    // Pendulum swings below; it stops while time is stopped.
+    // A brass cage hangs below the body; the pendulum swings inside it and stops while time is stopped.
     const swing = frozen ? 0 : Math.sin(t*2.4)*.35;
+    for (let i=-3;i<=3;i++) K.inked([[i*9,38],[i*15,100]], '#b8893a', 2);
     ctx.save(); ctx.translate(0,34); ctx.rotate(swing);
-    abLine([[0,0],[0,104]], '#8a6a2e', 4); abOval(0,118,18,18,'#d9a75c'); abOval(-5,113,6,6,'rgba(255,255,255,.45)');
+    K.inked([[0,0],[0,104]], '#c99a46', 3.5);
+    K.oval(0,118,18,18,brass(0,118,18),INK,0,2);
+    K.oval(0,118,11,11,null,'rgba(60,35,10,.6)',0,1);
+    for (let i=0;i<8;i++){ const q = i*AB_TAU/8; K.line([[Math.cos(q)*4,118+Math.sin(q)*4],[Math.cos(q)*9,118+Math.sin(q)*9]], 'rgba(60,35,10,.6)', 1); }
+    K.oval(-5,113,5,5,'rgba(255,255,255,.45)',null);
     ctx.restore();
-    // Gear wings.
+    ctx.beginPath(); ctx.ellipse(0,100,46,7,0,0,AB_TAU); ctx.strokeStyle = INK; ctx.lineWidth = 6; ctx.stroke(); ctx.strokeStyle = '#d9a75c'; ctx.lineWidth = 3; ctx.stroke();
+    // Gear wings on brass struts.
     const gs = frozen ? 0 : t*(1+strike);
     for (const s of [-1,1]){
-        abGear(s*56,-42,24,10,gs*s,'#a87a3a','#3b250d');
-        abGear(s*74,6,16,8,-gs*s*1.5,'#8a6a2e','#3b250d');
-        abLine([[s*50,-40],[s*(110+cast*20),-80-cast*20]], '#e8c07a', 4);
-        abLine([[s*60,4],[s*(118+cast*14),20-cast*10]], '#e8c07a', 3);
+        const tip1 = [s*(110+cast*20), -80-cast*20], tip2 = [s*(118+cast*14), 20-cast*10];
+        K.line([tip1, tip2], 'rgba(232,192,122,.5)', 1);
+        K.inked([[s*50,-40], tip1], '#e8c07a', 3.5); K.inked([[s*60,4], tip2], '#e8c07a', 2.8);
+        K.shape([[tip1[0],tip1[1]-5],[tip1[0]+s*12,tip1[1]-2],[tip1[0],tip1[1]+5]], brass(tip1[0],tip1[1],6), INK, 1);
+        K.shape([[tip2[0],tip2[1]-4],[tip2[0]+s*10,tip2[1]],[tip2[0],tip2[1]+4]], brass(tip2[0],tip2[1],6), INK, 1);
+        abGear(s*56,-42,24,10,gs*s,brass(s*56,-42,28),INK);
+        abGear(s*74,6,16,8,-gs*s*1.5,K.metal(s*74,6,18,'#e0b468','#5a3a14'),INK);
+        K.oval(s*56,-42,5,5,'#3b250d',INK); K.rivet(s*74,6,2.6,'#e8c07a');
     }
     // Arms wield clock-hand blades that sweep on strike.
     for (const s of [-1,1]){
         const ang = s*(.6 + cast*.9 - strike*1.4);
         ctx.save(); ctx.translate(s*30,-30); ctx.rotate(ang);
-        abLine([[0,0],[s*12,26],[s*8,48]], '#5a3d1a', 7);
+        K.limb([0,0], [s*12,26], [s*8,48], 8, '#8a6230', { armor:'#e0b468' });
         ctx.translate(s*8,48); ctx.rotate(-s*.8);
-        abShape([[-3,0],[3,0],[2,-70],[0,-84],[-2,-70]], s < 0 ? '#3b250d' : '#e8c07a', '#2a1a0a', 1);
-        abOval(0,-62,4,4,s < 0 ? '#e8c07a' : '#3b250d');
+        K.shape([[-3.5,0],[3.5,0],[2.6,-70],[0,-86],[-2.6,-70]], s < 0 ? K.metal(0,-40,20,'#6a4a22','#2a1808') : brass(0,-40,20), INK, 1.4);
+        K.oval(0,-62,4.5,4.5,s < 0 ? '#e8c07a' : '#3b250d',INK,0,1);
+        K.oval(0,0,5,5,brass(0,0,5),INK,0,1.2);
         ctx.restore();
     }
-    // Clock-face torso with hands that spin faster during attacks.
-    abOval(0,0,44,44,'#8a6a2e'); abOval(0,0,38,38,'#fff4d6');
-    for (let i=0;i<12;i++){ const q = i*AB_TAU/12; abLine([[Math.cos(q)*31,Math.sin(q)*31],[Math.cos(q)*36,Math.sin(q)*36]], '#3b250d', i%3 ? 1.5 : 3); }
+    // Shoulder plates and collar.
+    for (const s of [-1,1]){ K.plate([[s*20,-40],[s*40,-43],[s*45,-28],[s*30,-22]], '#f6d58c', '#7a5220'); K.rivet(s*34,-34,1.5,'#fff0c0'); }
+    K.plate([[-14,-46],[14,-46],[10,-38],[-10,-38]], '#f6d58c', '#7a5220', 1.2);
+    // Clock-face torso in a riveted brass case; the hands spin faster during attacks.
+    K.oval(0,0,46,46,brass(0,0,46),INK,0,2.2);
+    for (let i=0;i<12;i++){ const q = i*AB_TAU/12 + AB_TAU/24; K.rivet(Math.cos(q)*42, Math.sin(q)*42, 1.6, '#fff0c0'); }
+    K.oval(0,0,38,38,K.grad(0,-38,0,38,[[0,'#fffaf0'],[1,'#e6d8b8']]),INK,0,1.6);
+    K.oval(0,0,33,33,null,'rgba(59,37,13,.35)',0,.8);
+    for (let i=0;i<12;i++){ const q = i*AB_TAU/12; K.line([[Math.cos(q)*29,Math.sin(q)*29],[Math.cos(q)*36,Math.sin(q)*36]], '#3b250d', i%3 ? 1.4 : 3); }
+    // Sub-dial.
+    K.oval(0,15,7,7,'#f2e6c8','rgba(59,37,13,.6)',0,.8);
     const spin = frozen ? 0 : t*(.3 + strike*3);
-    abLine([[0,0],[Math.cos(spin*.2-Math.PI/2)*20,Math.sin(spin*.2-Math.PI/2)*20]], '#3b250d', 4);
-    abLine([[0,0],[Math.cos(spin-Math.PI/2)*30,Math.sin(spin-Math.PI/2)*30]], '#7a1f1f', 2);
-    abOval(0,0,4,4,'#d9a75c');
-    // Porcelain mask with a single eye that dilates as it winds up.
-    abShape([[-14,-80],[14,-80],[17,-62],[10,-46],[-10,-46],[-17,-62]], '#f2ece0', '#8a6a2e', 1.5);
-    abGlow(10,'#ffcf6a'); abOval(0,-66,5+cast*3,5+cast*3,frozen ? '#9fd7ff' : '#ffcf6a'); ctx.shadowBlur = 0;
-    abOval(0,-66,2,2,'#3b250d');
-    abOval(0,-54,2,2,'#3b250d'); abShape([[-1.2,-54],[1.2,-54],[2,-49],[-2,-49]], '#3b250d');
+    K.line([[0,15],[Math.cos(spin*2)*5,15+Math.sin(spin*2)*5]], '#3b250d', 1);
+    K.inked([[0,0],[Math.cos(spin*.2-Math.PI/2)*20,Math.sin(spin*.2-Math.PI/2)*20]], '#3b250d', 2.6);
+    K.inked([[0,0],[Math.cos(spin-Math.PI/2)*30,Math.sin(spin-Math.PI/2)*30]], '#8a2424', 1.4);
+    K.oval(0,0,4.5,4.5,brass(0,0,5),INK,0,1);
+    // Porcelain mask with a single eye that dilates as it winds up, gold tear lines and a grille mouth.
+    K.shape([[-14,-80],[14,-80],[17,-62],[10,-46],[-10,-46],[-17,-62]], K.metal(0,-64,18,'#ffffff','#d8cfbc'), INK, 1.6);
+    K.line([[-14,-80],[0,-84],[14,-80]], 'rgba(138,106,46,.7)', 1.2);
+    abGlow(10,'#ffcf6a'); K.oval(0,-66,5+cast*3,5+cast*3,frozen ? '#9fd7ff' : '#ffcf6a',INK,0,1); ctx.shadowBlur = 0;
+    K.oval(0,-66,2,2,'#3b250d',null);
+    for (const s of [-1,1]) K.line([[s*7,-60],[s*8,-52],[s*7,-47]], 'rgba(217,167,92,.8)', 1);
+    K.shape([[-5,-53],[5,-53],[4,-48],[-4,-48]], '#3b250d', INK, .8);
+    for (let i=-1;i<=1;i++) K.line([[i*2.4,-53],[i*2.4,-48]], '#d9a75c', .7);
     if (frozen){
         ctx.strokeStyle = 'rgba(159,215,255,.6)'; ctx.lineWidth = 2; ctx.setLineDash([4,6]);
         ctx.beginPath(); ctx.arc(0,0,110,0,AB_TAU); ctx.stroke(); ctx.setLineDash([]);
     }
-    ctx.restore();
+    ctx.restore(); K.ink(prevInk);
 }
 const ABYSS_DRAW = { selene:drawSelene, vael:drawVael, horologue:drawHorologue };
 
@@ -1665,6 +1753,23 @@ function renderGlitchCanvas(b){
         gx.fillRect(Math.round(random(30,170)), Math.round(random(20,200)), Math.random() < .2 ? 3 : 1, 1);
     }
     gx.globalAlpha = 1; gx.restore();
+    // Inked armour over the shadow body, in the first bosses' style: a heavy outline, shoulder
+    // plates, armoured joints, glowing rib seams and a corrupted core.
+    const K = BossKit, prevInk = K.ink('#000000');
+    K.target(gx); gx.save(); gx.translate(ox, oy); gx.scale(s, s);
+    K.shape(pts, null, '#000000', 1.8); K.shape(pts, null, 'rgba(182,60,255,.55)', .6);
+    for (const sd of [-1,1]){
+        K.plate([[sd*11,-31],[sd*24,-26],[sd*33,-8],[sd*22,-13]], '#3a1f6a', '#07050c', .9);
+        K.line([[sd*15,-27],[sd*26,-17]], 'rgba(0,240,255,.45)', .6);
+        K.joint(sd*33, -5, 3, '#1a1030', 'rgba(0,240,255,.55)');
+        K.joint(sd*17, 24, 3, '#1a1030', 'rgba(182,60,255,.6)');
+        K.joint(sd*40, 30, 2.4, '#1a1030', 'rgba(0,240,255,.55)');
+    }
+    for (let i=0;i<3;i++) K.line([[-10,-15+i*7],[0,-12+i*7],[10,-15+i*7]], 'rgba(0,240,255,.5)', .7);
+    K.line([[0,-24],[0,8]], 'rgba(182,60,255,.6)', .8);
+    K.shape([[0,-27],[4.5,-21.5],[0,-16],[-4.5,-21.5]], glitchPulseOn ? '#ffffff' : '#00f0ff', '#000000', .8);
+    K.line([[-8,-52],[-4,-46],[-7,-41]], 'rgba(182,60,255,.6)', .7);
+    gx.restore(); K.target(null); K.ink(prevInk);
     for (let i=0;i<Math.round(c*6);i++) gx.clearRect(Math.round(random(40,160)), Math.round(random(30,190)), Math.round(random(4,14)), Math.round(random(2,5)));
     // Eyes and a jagged grin burn cyan while a NULL BEAM charges.
     const glow = b.charging > 0 ? 1 - b.charging/(b.chargeMax||1) : 0;

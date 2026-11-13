@@ -449,7 +449,9 @@ update = function(dt){
         document.getElementById('lootReport').textContent = 'The Idol has fallen. Rewards: Verdict of Heaven and the Eye of the Arbiter.';
         showMessage('✦ THE IDOL HAS FALLEN. The heavens are silent.');
         // Final boss: freeze the run and show the victory screen with a restart button.
-        gameOver = true; victory = true;
+        // A kill on the same frame as the player's death still counts as a win.
+        gameOver = true; victory = true; saveRecord(); refreshBestRun();
+        document.getElementById('deathScreen').style.display = 'none';
         const win = document.getElementById('idolWinScreen');
         if (win) win.style.display = 'flex';
         return;
@@ -503,27 +505,31 @@ function gGlow(x, y, r, color, a){
     g.addColorStop(0, color); g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, G_TAU); ctx.fill(); ctx.restore();
 }
-// One wing of light. A curved gold bone sweeps out from the shoulder; primaries hang off it,
+// One wing of light. A curved, inked gold bone sweeps out from the shoulder; primaries hang off it,
 // longest at the tip, with a row of short covert feathers over their roots.
 // Angles: 0 points straight out from the body, negative is up. s mirrors the wing.
+const G_INK = '#4a3208';
 function gFeather(x, y, a, L, w, alpha, rim){
     ctx.save(); ctx.translate(x, y); ctx.rotate(a);
-    let fill = 'rgba(255,246,222,.9)';
+    let fill = 'rgba(255,246,222,.92)';
     if (visualMode !== 'minimal'){
         fill = ctx.createLinearGradient(0, 0, L, 0);
-        fill.addColorStop(0, 'rgba(255,226,150,.95)'); fill.addColorStop(.35, 'rgba(255,252,240,.95)'); fill.addColorStop(1, 'rgba(255,250,235,.15)');
+        fill.addColorStop(0, 'rgba(255,226,150,.98)'); fill.addColorStop(.35, 'rgba(255,252,240,.98)'); fill.addColorStop(1, 'rgba(255,250,235,.3)');
     }
     const A0 = ctx.globalAlpha; ctx.globalAlpha = A0*alpha;
     ctx.beginPath(); ctx.moveTo(0, -w*.3);
     ctx.quadraticCurveTo(L*.45, -w, L, 0); ctx.quadraticCurveTo(L*.5, w*.7, 0, w*.3); ctx.closePath();
     ctx.fillStyle = fill; ctx.fill();
-    ctx.strokeStyle = rim; ctx.lineWidth = 1.1; ctx.stroke();
-    ctx.strokeStyle = 'rgba(201,150,60,.55)'; ctx.lineWidth = .9; ctx.beginPath(); ctx.moveTo(2, 0); ctx.lineTo(L*.88, -w*.05); ctx.stroke();
+    ctx.strokeStyle = 'rgba(74,50,8,.75)'; ctx.lineWidth = 1.3; ctx.stroke();
+    ctx.strokeStyle = rim; ctx.lineWidth = .7; ctx.stroke();
+    ctx.strokeStyle = 'rgba(160,110,30,.7)'; ctx.lineWidth = .9; ctx.beginPath(); ctx.moveTo(2, 0); ctx.lineTo(L*.88, -w*.05); ctx.stroke();
+    ctx.strokeStyle = 'rgba(160,110,30,.3)'; ctx.lineWidth = .6; ctx.beginPath();
+    for (let i=1;i<4;i++){ const q = i/4; ctx.moveTo(L*q, -w*.05*q); ctx.lineTo(L*q + L*.07, -w*.5*(1-q*.5)); }
+    ctx.stroke();
     ctx.globalAlpha = A0; ctx.restore();
 }
 function gWing(s, base, sweep, len, count, t, alpha){
     ctx.save(); ctx.scale(s, 1); ctx.translate(16, -50);
-    // The bone: a gentle arc from the shoulder to the wrist of the wing.
     const boneA = base + sweep*.35, bone = len*.42, bx = Math.cos(boneA)*bone, by = Math.sin(boneA)*bone;
     const mx = Math.cos(boneA - .35)*bone*.55, my = Math.sin(boneA - .35)*bone*.55;
     for (let i=count-1;i>=0;i--){
@@ -537,31 +543,31 @@ function gWing(s, base, sweep, len, count, t, alpha){
         const q = (i+.5)/(count-1), a = base + q*sweep*.85;
         gFeather(bx*(.15 + .7*(1-q)), by*(.15 + .7*(1-q)), a, len*.3, 8, alpha*.95, 'rgba(255,214,107,.9)');
     }
-    abGlow(10, G_GOLD);
-    ctx.strokeStyle = G_GOLD; ctx.lineWidth = 3.2; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(mx, my, bx, by); ctx.stroke(); ctx.shadowBlur = 0;
-    abOval(bx, by, 3.2, 3.2, G_WHITE);
+    // The inked gold bone, with an armoured wrist joint.
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = G_INK; ctx.lineWidth = 6.5; ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(mx, my, bx, by); ctx.stroke();
+    abGlow(8, G_GOLD); ctx.strokeStyle = BossKit.metal(bx/2, by/2, bone/2, '#fff2c0', '#c99a3a'); ctx.lineWidth = 3.4; ctx.stroke(); ctx.shadowBlur = 0;
+    const pk = BossKit.ink(G_INK); BossKit.joint(bx, by, 4, '#ffe7a0'); BossKit.ink(pk);
     ctx.restore();
 }
-// A flowing sleeve from the shoulder that widens into a bell cuff, and an open hand of light.
+// An armoured arm under a flowing bell sleeve, ending in an open hand of light.
 function gArm(s, hx, hy, cast, t){
+    const K = BossKit, pk = K.ink(G_INK);
     const sx = s*36, sy = -50, ex = s*58, ey = (sy + hy)/2 + 10;
     const a = Math.atan2(hy-ey, hx-ex), px = -Math.sin(a), py = Math.cos(a);
-    // Upper sleeve.
-    abLine([[sx, sy],[ex, ey]], '#d8c9a3', 20); abLine([[sx, sy],[ex, ey]], '#fbf4e2', 15);
+    // Upper arm with a gilded vambrace at the elbow.
+    K.limb([sx, sy], [ex, ey], [hx - Math.cos(a)*6, hy - Math.sin(a)*6], 13, '#f6edd6', { armor:'#ffe7a0', trim:G_GOLD });
     // Bell sleeve: narrow at the elbow, wide and swaying at the cuff.
     const sway = Math.sin(t*2 + s)*3, cw = 17;
-    const cx = hx - Math.cos(a)*10, cy = hy - Math.sin(a)*10;
-    const sg = ctx.createLinearGradient(ex, ey, cx, cy); sg.addColorStop(0, '#fbf4e2'); sg.addColorStop(1, '#e6d8b4');
-    abShape([[ex + px*8, ey + py*8],[cx + px*cw + sway, cy + py*cw + 6],[cx - px*cw + sway, cy - py*cw + 6],[ex - px*8, ey - py*8]], sg, 'rgba(201,162,74,.85)', 1.2);
-    abGlow(6, G_GOLD); abLine([[cx + px*cw + sway, cy + py*cw + 6],[cx - px*cw + sway, cy - py*cw + 6]], G_GOLD, 3); ctx.shadowBlur = 0;
-    // The hand: a palm and four fingers, open toward the player.
-    ctx.save(); ctx.translate(hx, hy); ctx.rotate(a);
-    abOval(2, 0, 6.5, 5.5, '#fffaf0');
-    for (let f=0;f<4;f++){ const fa = (f-1.5)*.32; abLine([[5, Math.sin(fa)*3],[5 + Math.cos(fa)*10, Math.sin(fa)*10]], '#fffaf0', 2.6); }
-    abLine([[0, -4*s],[4, -10*s]], '#fffaf0', 2.6);   // thumb
-    if (cast > .1){ abGlow(18, G_GOLD); abOval(10, 0, 3 + cast*6, 3 + cast*6, 'rgba(255,250,225,.95)'); ctx.shadowBlur = 0; }
-    ctx.restore();
+    const cx = hx - Math.cos(a)*12, cy = hy - Math.sin(a)*12;
+    K.shape([[ex + px*8, ey + py*8],[cx + px*cw + sway, cy + py*cw + 6],[cx - px*cw + sway, cy - py*cw + 6],[ex - px*8, ey - py*8]],
+        K.grad(ex, ey, cx, cy, [[0,'#fffaf0'],[1,'#e2d2a8']]), G_INK, 1.4);
+    for (let k=-1;k<=1;k++) K.line([[ex + px*3*k, ey + py*3*k],[cx + px*cw*.6*k + sway, cy + py*cw*.6*k + 6]], 'rgba(150,110,40,.35)', 1);
+    abGlow(6, G_GOLD); K.inked([[cx + px*cw + sway, cy + py*cw + 6],[cx - px*cw + sway, cy - py*cw + 6]], G_GOLD, 2.6); ctx.shadowBlur = 0;
+    // The hand, open toward the player.
+    K.hand(hx, hy, a, '#fffaf0', .9, 1.05);
+    if (cast > .1){ abGlow(18, G_GOLD); K.oval(hx + Math.cos(a)*12, hy + Math.sin(a)*12, 3 + cast*6, 3 + cast*6, 'rgba(255,250,225,.95)', null); ctx.shadowBlur = 0; }
+    K.ink(pk);
 }
 // Sigils down the stole: an eye, a triangle, a sun, a crescent and a key.
 function gSigil(i, x, y){
@@ -595,7 +601,7 @@ function gHalo(x, y, R, t, ph, cast){
     for (let i=0;i<7;i++){
         const q = -Math.PI/2 + (i-3)*.32, r1 = R*.62, r2 = R*(1.02 + (i === 3 ? .35 : i%2 ? .12 : .22));
         abGlow(10, G_GOLD);
-        abShape([[Math.cos(q-.05)*r1, Math.sin(q-.05)*r1], [Math.cos(q)*r2, Math.sin(q)*r2], [Math.cos(q+.05)*r1, Math.sin(q+.05)*r1]], i === 3 ? G_WHITE : G_GOLD);
+        abShape([[Math.cos(q-.05)*r1, Math.sin(q-.05)*r1], [Math.cos(q)*r2, Math.sin(q)*r2], [Math.cos(q+.05)*r1, Math.sin(q+.05)*r1]], i === 3 ? G_WHITE : G_GOLD, G_INK, 1.1);
         ctx.shadowBlur = 0;
     }
     ctx.restore();
@@ -606,7 +612,7 @@ function gEye(x, y, t, cast, look){
     const open = .55 + cast*.45 + Math.max(0, Math.sin(t*.7))*.05;
     abGlow(18, G_GOLD);
     ctx.beginPath(); ctx.moveTo(-11, 0); ctx.quadraticCurveTo(0, -9*open, 11, 0); ctx.quadraticCurveTo(0, 9*open, -11, 0); ctx.closePath();
-    ctx.fillStyle = '#fff4cc'; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff4cc'; ctx.fill(); ctx.shadowBlur = 0; ctx.strokeStyle = G_INK; ctx.lineWidth = 1.6; ctx.stroke();
     ctx.save(); ctx.clip();
     const px = Math.cos(look)*4, py = Math.sin(look)*2.4;
     abOval(px, py, 4.6, 4.6, G_GOLD); abOval(px, py, 2.4, 2.4, G_VOID);
@@ -616,9 +622,9 @@ function gEye(x, y, t, cast, look){
 }
 function drawGod(b){
     // While time is stopped the Idol freezes mid-motion: wings, halo and robe hold still.
-    const t = gTime()/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
+    const K = BossKit, t = gTime()/1000, a = b.anim, hit = Math.exp(-(worldTime-a.hitAt)/150), cast = a.wind, strike = a.strike;
     const ph = b.phase || 1, A0 = ctx.globalAlpha, look = player ? angleTo(b, player) : Math.PI/2;
-    const bob = Math.sin(t*1.2)*6;
+    const bob = Math.sin(t*1.2)*6, prevInk = K.ink(G_INK);
     ctx.save(); ctx.translate(b.x, b.y + bob); ctx.rotate(hit*.025); ctx.lineJoin = 'round';
 
     // Sacred geometry turning behind it.
@@ -646,25 +652,24 @@ function drawGod(b){
 
     // Flowing robe of white marble, veined with gold. The hem dissolves into light.
     const hem = i => 120 + Math.sin(t*2 + i*.9)*7;
-    const rg = ctx.createLinearGradient(0, -60, 0, 130);
-    rg.addColorStop(0, '#fffdf6'); rg.addColorStop(.5, '#e8dcc0'); rg.addColorStop(1, 'rgba(255,214,107,.15)');
     const robe = [[-26,-58],[26,-58],[42,0],[58,hem(0)]];
     for (let i=1;i<8;i++) robe.push([58 - i*16.6, hem(i) + (i%2 ? 10 : 0)]);
     robe.push([-58, hem(8)], [-42, 0]);
-    abShape(robe, rg, 'rgba(201,162,74,.8)', 1.5);
-    ctx.save(); ctx.beginPath(); robe.forEach(([x,y],i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); ctx.closePath(); ctx.clip();
+    K.shape(robe, K.grad(0,-60,0,130,[[0,'#fffdf6'],[.5,'#e8dcc0'],[1,'rgba(255,214,107,.25)']]), G_INK, 1.8);
+    ctx.save(); K.trace(robe); ctx.clip();
+    // Deep folds.
+    for (let i=-3;i<=3;i++) if (i) K.line([[i*9,-40],[i*18 + Math.sin(t*2+i)*3, 126]], 'rgba(120,90,40,.28)', 2);
     // Gold veins like cracks in marble.
-    ctx.strokeStyle = 'rgba(201,150,50,.55)'; ctx.lineWidth = 1.2;
+    ctx.strokeStyle = 'rgba(190,140,40,.6)'; ctx.lineWidth = 1.2;
     for (let i=0;i<6;i++){
         ctx.beginPath(); let x = -40 + i*16, y = -50;
         ctx.moveTo(x, y);
         for (let k=0;k<6;k++){ x += (abHash(i*9+k)-.5)*18; y += 28; ctx.lineTo(x, y); }
         ctx.stroke();
     }
-    // A vertical stole with sigils.
-    abShape([[-9,-56],[9,-56],[12,128],[-12,128]], 'rgba(255,214,107,.85)');
+    // A vertical stole with sigils, inked and trimmed.
+    K.shape([[-10,-56],[10,-56],[13,128],[-13,128]], K.grad(-12,0,12,0,[[0,'#d9a840'],[.5,'#ffe7a0'],[1,'#c08a2a']]), G_INK, 1.4);
     for (let i=0;i<5;i++) gSigil(i, 0, -28 + i*30);
-    abLine([[-9,-56],[-12,128]], 'rgba(138,100,32,.8)', 1); abLine([[9,-56],[12,128]], 'rgba(138,100,32,.8)', 1);
     ctx.restore();
     // Light motes rising from the hem.
     for (let i=0;i<14;i++){
@@ -672,11 +677,18 @@ function drawGod(b){
         ctx.globalAlpha = A0*(1-q)*.85; abOval(x, y, 2 + (i%3), 2 + (i%3), i%3 ? G_HALO : G_WHITE);
     }
     ctx.globalAlpha = A0;
+    // Gilded belt.
+    K.plate([[-40,-2],[40,-2],[42,8],[-42,8]], '#ffe7a0', '#a87a24', 1.4);
+    K.oval(0,3,6,6,K.metal(0,3,6,'#ffffff','#e0b050'),G_INK,0,1.2);
 
-    // Gilded mantle over the shoulders.
-    abShape([[-52,-52],[-20,-70],[0,-58],[20,-70],[52,-52],[44,-28],[0,-38],[-44,-28]], G_GOLD, '#8a6420', 1.5);
-    for (const s of [-1, 1]) abShape([[s*20,-68],[s*48,-54],[s*42,-34],[s*16,-44]], '#ffe7a0');
-    abGlow(14, G_WHITE); abOval(0, -46, 7, 7, G_WHITE); ctx.shadowBlur = 0; abOval(0, -46, 3.5, 3.5, G_GOLD);
+    // Gilded mantle over the shoulders: layered plates with rivets and a jewel at the throat.
+    K.plate([[-52,-52],[-20,-70],[0,-58],[20,-70],[52,-52],[44,-28],[0,-38],[-44,-28]], '#fff0b8', '#b88a2a', 1.8);
+    for (const s of [-1, 1]){
+        K.plate([[s*20,-68],[s*48,-54],[s*42,-34],[s*16,-44]], '#fff6d0', '#d0a040', 1.2);
+        K.line([[s*24,-62],[s*44,-50]], 'rgba(74,50,8,.45)', 1); K.line([[s*22,-54],[s*42,-42]], 'rgba(74,50,8,.45)', 1);
+        K.rivet(s*34,-56,1.7,'#fff6d0'); K.rivet(s*30,-42,1.7,'#fff6d0');
+    }
+    abGlow(14, G_WHITE); K.oval(0, -46, 7, 7, G_WHITE, G_INK, 0, 1.2); ctx.shadowBlur = 0; K.oval(0, -46, 3.5, 3.5, G_GOLD, null);
 
     // Arms: open palms raised while it casts, a sceptre of light in the right hand.
     for (const s of [-1, 1]){
@@ -685,24 +697,24 @@ function drawGod(b){
         gArm(s, hx, hy, cast, t);
         if (s > 0){
             ctx.save(); ctx.translate(hx, hy); ctx.rotate(-.18 - cast*.4 + strike*.6);
-            abGlow(14, G_GOLD); abLine([[0, 40],[0, -150]], G_GOLD, 4); ctx.shadowBlur = 0;
-            abLine([[0, 36],[0, -146]], G_WHITE, 1.5);
+            K.inked([[0, 40],[0, -150]], G_GOLD, 4);
+            abGlow(10, G_GOLD); K.line([[0, 36],[0, -146]], G_WHITE, 1.4); ctx.shadowBlur = 0;
+            for (const y of [-40, -100]) K.plate([[-5,y],[5,y],[4,y+6],[-4,y+6]], '#fff0b8', '#b88a2a', 1);
             // A small sun at the sceptre's tip.
             ctx.translate(0, -162); ctx.rotate(t*.8);
-            for (let i=0;i<8;i++){ const q = i*G_TAU/8; abShape([[Math.cos(q-.18)*8, Math.sin(q-.18)*8],[Math.cos(q)*(18 + (i%2)*6), Math.sin(q)*(18 + (i%2)*6)],[Math.cos(q+.18)*8, Math.sin(q+.18)*8]], G_HALO); }
-            abGlow(16, G_WHITE); abOval(0, 0, 8, 8, G_WHITE); ctx.shadowBlur = 0;
+            for (let i=0;i<8;i++){ const q = i*G_TAU/8; K.shape([[Math.cos(q-.18)*8, Math.sin(q-.18)*8],[Math.cos(q)*(18 + (i%2)*6), Math.sin(q)*(18 + (i%2)*6)],[Math.cos(q+.18)*8, Math.sin(q+.18)*8]], G_HALO, G_INK, 1); }
+            abGlow(16, G_WHITE); K.oval(0, 0, 8, 8, G_WHITE, G_INK, 0, 1.2); ctx.shadowBlur = 0;
             ctx.restore();
         }
     }
 
     // Hood and the void face.
-    const hg = ctx.createLinearGradient(0, -120, 0, -60);
-    hg.addColorStop(0, '#fffdf6'); hg.addColorStop(1, '#d8c9a3');
     ctx.beginPath(); ctx.moveTo(-26,-62); ctx.quadraticCurveTo(-30,-112,0,-122); ctx.quadraticCurveTo(30,-112,26,-62); ctx.quadraticCurveTo(0,-54,-26,-62); ctx.closePath();
-    ctx.fillStyle = hg; ctx.fill(); ctx.strokeStyle = 'rgba(201,162,74,.9)'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = K.metal(0,-92,30,'#fffdf6','#d8c9a3'); ctx.fill(); ctx.strokeStyle = G_INK; ctx.lineWidth = 1.8; ctx.stroke();
+    K.line([[-22,-70],[-24,-100],[-8,-116]], 'rgba(150,110,40,.4)', 1); K.line([[22,-70],[24,-100],[8,-116]], 'rgba(150,110,40,.4)', 1);
     ctx.beginPath(); ctx.moveTo(-17,-66); ctx.quadraticCurveTo(-19,-104,0,-110); ctx.quadraticCurveTo(19,-104,17,-66); ctx.quadraticCurveTo(0,-60,-17,-66); ctx.closePath();
     const fg = ctx.createRadialGradient(0, -88, 2, 0, -88, 24); fg.addColorStop(0, '#1a0f2e'); fg.addColorStop(1, G_VOID);
-    ctx.fillStyle = fg; ctx.fill();
+    ctx.fillStyle = fg; ctx.fill(); ctx.strokeStyle = G_GOLD; ctx.lineWidth = 1.4; ctx.stroke();
     // Stars inside the face.
     ctx.save(); ctx.clip();
     for (let i=0;i<12;i++){ const tw = (Math.sin(t*2 + i*1.9)+1)/2; ctx.globalAlpha = A0*(.3 + tw*.7); abOval(-14 + abHash(i)*28, -106 + abHash(i+5)*40, .6 + tw, .6 + tw, '#ffffff'); }
@@ -711,7 +723,7 @@ function drawGod(b){
     // Cracks of light spread across the face in later phases.
     if (ph >= 3){ abGlow(8, G_GOLD); abLine([[6,-104],[10,-94],[7,-86],[13,-74]], 'rgba(255,214,107,.9)', 1.3); ctx.shadowBlur = 0; }
     if (ph >= 4){ abGlow(8, G_GOLD); abLine([[-5,-108],[-10,-96],[-6,-84],[-12,-70]], 'rgba(255,214,107,.9)', 1.3); ctx.shadowBlur = 0; }
-    ctx.restore();
+    ctx.restore(); K.ink(prevInk);
 
     if (b.stun > 0){ ctx.save(); ctx.fillStyle = G_GOLD; ctx.font = 'bold 13px Georgia, serif'; ctx.textAlign = 'center'; ctx.fillText('HUMBLED', b.x, b.y - 170); ctx.restore(); }
     // Descent: a pillar of light lowers it onto the battlefield.

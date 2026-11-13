@@ -72,6 +72,17 @@ let equippedArtifacts = new Array(ARTIFACT_SLOT_COUNT).fill(null);
 let artifactMenuOpen = false;
 
 function hasArtifact(id){ return equippedArtifacts.includes(id); }
+// Painted artifact art (js/artifact-art.js). Animated canvases in the menu, cached textures in
+// the HUD; falls back to the emoji when the art module is not loaded.
+function artifactIconHTML(id, animated){
+    const a = ARTIFACTS[id];
+    if (typeof drawArtifactArt === 'function' && typeof ARTIFACT_ART !== 'undefined' && ARTIFACT_ART[id]){
+        if (animated) return `<canvas class="artTex" data-art="${id}" width="128" height="128"></canvas>`;
+        const url = artifactTextureURL(id);
+        if (url) return `<img class="artTex" src="${url}" alt="${a.name}" draggable="false">`;
+    }
+    return a.icon;
+}
 function grantArtifact(id, x, y){
     if (ownedArtifacts.includes(id)) return;
     ownedArtifacts.push(id);
@@ -107,7 +118,7 @@ function updateArtifactBar(){
         const a = id && ARTIFACTS[id];
         const el = document.createElement("div");
         el.className = "artifactSlotMini" + (a ? " filled" : "");
-        el.textContent = a ? a.icon : "";
+        el.innerHTML = a ? artifactIconHTML(id, false) : "";
         if (a) el.style.boxShadow = `0 0 10px ${a.color}`;
         bar.appendChild(el);
     }
@@ -123,7 +134,7 @@ function renderArtifactModal(){
         const a = id && ARTIFACTS[id];
         const box = document.createElement("div");
         box.className = "artifactSlotBig" + (a ? " filled" : "");
-        box.innerHTML = (a ? a.icon : "＋") + `<span class="slotNum">${i+1}</span>`;
+        box.innerHTML = (a ? artifactIconHTML(id, true) : "＋") + `<span class="slotNum">${i+1}</span>`;
         if (a) box.onclick = () => toggleEquip(id);
         slotsRow.appendChild(box);
     }
@@ -135,7 +146,7 @@ function renderArtifactModal(){
         const equipped = equippedArtifacts.includes(id);
         const card = document.createElement("div");
         card.className = "artifactCard" + (equipped ? " equipped" : "");
-        card.innerHTML = `<div class="aIcon">${a.icon}</div><div class="aName">${a.name}</div>
+        card.innerHTML = `<div class="aIcon">${artifactIconHTML(id, true)}</div><div class="aName">${a.name}</div>
             <div class="aBoss">Drop: ${a.boss}</div><div class="aDesc">${a.desc}</div>
             <div class="aStatus">${equipped ? "✅ Equipped" : "Click to equip"}</div>`;
         card.onclick = () => toggleEquip(id);
@@ -2008,7 +2019,6 @@ function update(dt){
         document.getElementById("bossHealth").style.width = `${Math.max(0, twoFacedDemon.hp/twoFacedDemon.maxHp*100)}%`;
         if (twoFacedDemon.hp <= 0){
             twoFacedDemonDefeated = true;
-            if (!killedBosses.has(4)){ victory = true; saveRecord(); }
             grantArtifact('demon_core', twoFacedDemon.x, twoFacedDemon.y);
             pickups.push({ x: twoFacedDemon.x, y: twoFacedDemon.y + 50, weaponIndex: 14, color: '#cc44ff' });
             recordBossKill(4);
@@ -2484,6 +2494,11 @@ function drawPickups(){
             const a = ARTIFACTS[p.artifactId];
             const bob = Math.sin(worldTime*.004 + p.x)*6;
             ctx.translate(p.x, p.y + bob);
+            if (typeof drawArtifactArt === 'function' && typeof ARTIFACT_ART !== 'undefined' && ARTIFACT_ART[p.artifactId]){
+                drawArtifactArt(ctx, p.artifactId, 54, worldTime / 1000);
+                ctx.restore();
+                continue;
+            }
             ctx.shadowBlur = visualMode === "minimal" ? 0 : 4; ctx.shadowColor = a.color; ctx.fillStyle = a.color;
             ctx.globalAlpha = .5 + .35*Math.sin(worldTime*.006);
             ctx.rotate(Math.PI/4);
@@ -2656,14 +2671,17 @@ function healPlayer(){
     showMessage('✚ Health restored'); updateRunHUD();
 }
 function formatTime(ms){ const seconds = Math.floor(ms/1000); return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`; }
-function readBestRun(){ try { const value=Number(localStorage.getItem('boss-rush-best')); return Number.isFinite(value) && value > 0 ? value : null; } catch { return null; } }
+// The record is the time to defeat The Idol, the final boss. (The old 'boss-rush-best' key timed only the
+// first five bosses, so it is left behind rather than compared against full runs.)
+const BEST_RUN_KEY = 'boss-rush-best-idol';
+function readBestRun(){ try { const value=Number(localStorage.getItem(BEST_RUN_KEY)); return Number.isFinite(value) && value > 0 ? value : null; } catch { return null; } }
 function saveRecord(){
     const best = readBestRun();
-    if (best === null || runElapsed < best) { try { localStorage.setItem('boss-rush-best',String(runElapsed)); } catch {} }
+    if (best === null || runElapsed < best) { try { localStorage.setItem(BEST_RUN_KEY,String(runElapsed)); } catch {} }
 }
 function refreshBestRun(){
     const best = readBestRun();
-    document.getElementById('bestRun').textContent = best ? `Best victory: ${formatTime(best)}` : 'Record: defeat all five bosses';
+    document.getElementById('bestRun').textContent = best ? `Best victory: ${formatTime(best)}` : 'Record: defeat The Idol';
 }
 function updateRunHUD(){
     document.getElementById('runStatus').textContent = `Run time · ${formatTime(runElapsed)}`;

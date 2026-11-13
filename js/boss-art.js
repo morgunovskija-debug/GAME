@@ -338,3 +338,92 @@ const BossArt = (() => {
     }
     return {guardian,cosmic,dragon:dragonModel,worm,demon};
 })();
+
+/* BossKit: the drawing vocabulary of the first five bosses (ink outlines, metal sheen, inked limbs
+   with armoured joints, claws, rune rings) packaged for the later bosses. It draws on the main
+   canvas unless target() points it at another context (The Glitch renders off-screen). */
+const BossKit = (() => {
+    const TAU = Math.PI * 2;
+    let C = null, INK = '#222b31';
+    const X = () => C || ctx;
+    function target(c){ C = c || null; }
+    // Sets the outline colour for the current boss; returns the previous one so it can be restored.
+    function ink(color){ const prev = INK; if (color) INK = color; return prev; }
+    function trace(pts){ const c = X(); c.beginPath(); pts.forEach(([x,y],i) => i ? c.lineTo(x,y) : c.moveTo(x,y)); c.closePath(); }
+    function shape(pts, fill, stroke, w = 1.5){
+        const c = X(); trace(pts);
+        if (fill){ c.fillStyle = fill; c.fill(); }
+        const s = stroke === undefined ? INK : stroke;
+        if (s){ c.strokeStyle = s; c.lineWidth = w; c.lineJoin = 'round'; c.stroke(); }
+    }
+    function oval(x, y, rx, ry, fill, stroke, rot = 0, w = 1.3){
+        const c = X(); c.beginPath(); c.ellipse(x, y, Math.max(.1, rx), Math.max(.1, ry), rot, 0, TAU);
+        if (fill){ c.fillStyle = fill; c.fill(); }
+        const s = stroke === undefined ? INK : stroke;
+        if (s){ c.strokeStyle = s; c.lineWidth = w; c.stroke(); }
+    }
+    function line(pts, color, w = 1){
+        const c = X(); c.beginPath(); pts.forEach(([x,y],i) => i ? c.lineTo(x,y) : c.moveTo(x,y));
+        c.strokeStyle = color; c.lineWidth = w; c.lineCap = 'round'; c.lineJoin = 'round'; c.stroke();
+    }
+    // A stroke with an ink outline, like the bosses' limbs, rods and tendrils.
+    function inked(pts, color, w){ line(pts, INK, w + 3.5); line(pts, color, w); }
+    function metal(x, y, r, light, dark){
+        const g = X().createLinearGradient(x - r, y - r, x + r, y + r);
+        g.addColorStop(0, light); g.addColorStop(.48, dark); g.addColorStop(1, light); return g;
+    }
+    function grad(x0, y0, x1, y1, stops){ const g = X().createLinearGradient(x0, y0, x1, y1); stops.forEach(([o, col]) => g.addColorStop(o, col)); return g; }
+    function joint(x, y, r, color = '#a6ac9e', shine = 'rgba(255,255,255,.45)'){
+        oval(x, y, r, r, color); oval(x - r * .3, y - r * .3, r * .45, r * .45, shine, null);
+    }
+    // Shoulder → elbow → wrist with an ink outline and a highlight streak; optional armoured
+    // elbow and bracer bands on the forearm.
+    function limb(a, b, c2, w, color, opt = {}){
+        line([a, b, c2], INK, w + 4); line([a, b, c2], color, w);
+        line([[a[0] - w * .2, a[1] - 1], [b[0] - w * .2, b[1] - 1], [c2[0] - w * .14, c2[1]]], 'rgba(255,255,255,.22)', Math.max(1, w * .22));
+        if (opt.bands){
+            const ang = Math.atan2(c2[1] - b[1], c2[0] - b[0]), px = -Math.sin(ang) * w * .55, py = Math.cos(ang) * w * .55;
+            for (let i = 1; i <= opt.bands; i++){
+                const q = .25 + .5 * i / (opt.bands + 1), x = b[0] + (c2[0] - b[0]) * q, y = b[1] + (c2[1] - b[1]) * q;
+                line([[x - px, y - py], [x + px, y + py]], opt.trim || INK, 1.6);
+            }
+        }
+        if (opt.armor){ joint(b[0], b[1], w * .58, opt.armor); line([[b[0] - w * .5, b[1] - 3], [b[0] + w * .5, b[1] + 3]], opt.trim || 'rgba(255,255,255,.4)', 1.4); }
+    }
+    // A hand whose fingers point along `angle`; open 1 = spread, 0 = curled.
+    function hand(x, y, angle, color, open = 1, scale = 1){
+        const c = X(); c.save(); c.translate(x, y); c.rotate(angle); c.scale(scale, scale);
+        oval(0, 0, 7, 6, color);
+        for (let f = 0; f < 4; f++){
+            const fa = (f - 1.5) * .26 * open, bx = 4, by = (f - 1.5) * 3;
+            const mx = bx + Math.cos(fa) * 6, my = by + Math.sin(fa) * 6, bend = fa + .9 * (1 - open);
+            inked([[bx, by], [mx, my], [mx + Math.cos(bend) * 5, my + Math.sin(bend) * 5]], color, 2.3);
+        }
+        inked([[-1, -4], [3, -9], [7, -10]], color, 2.3);
+        c.restore();
+    }
+    function claw(x, y, angle, color = '#b6b5a0', talon = '#d2cfb4'){
+        const c = X(); c.save(); c.translate(x, y); c.rotate(angle);
+        oval(0, 0, 11, 9, color);
+        for (let i = 0; i < 3; i++) shape([[4, i * 6 - 7], [21 - i * 2, i * 7 - 9], [11, i * 6 - 2]], talon, INK, 1);
+        c.restore();
+    }
+    function runeRing(radius, angle, count, color, w = 1){
+        const c = X(); c.save(); c.rotate(angle); c.strokeStyle = color; c.lineWidth = w;
+        c.beginPath(); c.arc(0, 0, radius, 0, TAU); c.stroke();
+        for (let i = 0; i < count; i++){
+            c.save(); c.rotate(i / count * TAU);
+            line([[radius - 4, -3], [radius + 2, 0], [radius - 3, 4]], color, w);
+            line([[radius + 4, -4], [radius + 4, 4]], color, w * .8); c.restore();
+        }
+        c.restore();
+    }
+    function rivet(x, y, r = 1.8, color = '#d9c9a0'){ oval(x, y, r, r, color, INK, 0, .8); }
+    // An armour plate: an outlined polygon filled with a metal sheen sized to the polygon.
+    function plate(pts, light, dark, w = 1.5){
+        const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+        const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+        shape(pts, metal((x0 + x1) / 2, (y0 + y1) / 2, Math.max(4, Math.max(x1 - x0, y1 - y0) / 2), light, dark), undefined, w);
+    }
+    return { target, ink, trace, shape, oval, line, inked, metal, grad, joint, limb, hand, claw, runeRing, rivet, plate };
+})();
