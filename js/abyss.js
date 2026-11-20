@@ -331,6 +331,7 @@ function updateAbyssBoss(dt){
         currentBiome = 'forest';
         for (const id of ['bossName','bossBar','bossHealth','phase','message']) document.getElementById(id).className = '';
         showLocationCard(b.index, ABYSS_EPILOGUES[b.index-ABYSS_INDEX], 5200);
+        savePracticeCheckpoint(b.index);
     }
 }
 

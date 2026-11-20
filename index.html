@@ -74,7 +74,7 @@
     <div id="tutorial" style="display:none;"><div class="tutHead"><span id="tutorialStep"></span><span id="tutorialDots"></span></div><p id="tutorialText"></p><button id="tutorialSkip" type="button">Skip tutorial · K</button></div>
     <div id="attackWarning"></div>
     <div id="bossWarning"><div class="warnTitle">FIRE DESTROYER</div><div class="warnSub">AWAKENED</div></div>
-    <div id="deathScreen" class="overlay"><h1>YOU DIED</h1><p>The flames proved stronger.</p><button onclick="restart()">RESPAWN</button></div>
+    <div id="deathScreen" class="overlay"><h1>YOU DIED</h1><p>The trial proved too much.</p><p id="practiceCheckpointStatus"></p><button id="deathRespawnButton" onclick="respawn()">RESPAWN</button></div>
     <div id="winScreen" class="overlay">
         <h1>🔥 TOTAL VICTORY!</h1>
         <p>The Fire Destroyer has fallen. The volcano is silent.</p>
@@ -90,7 +90,14 @@
     <div id="classScreen" class="overlay">
         <h1>⚔️ CHOOSE YOUR CLASS ⚔️</h1>
         <p class="subtitle">Each class has unique bonuses and a starting weapon</p>
-        <div class="runRecord"><p id="bestRun"></p><label class="tutorialOption"><input id="tutorialToggle" type="checkbox"> Play the tutorial first</label></div><div class="classGrid">
+        <div class="runRecord">
+            <p id="bestRun"></p>
+            <div class="classMenuOptions">
+                <label class="tutorialOption"><input id="tutorialToggle" type="checkbox"> Play the tutorial first</label>
+                <label class="tutorialOption practiceOption"><input id="practiceModeToggle" type="checkbox"> Practice mode <span>Checkpoint after every boss</span></label>
+            </div>
+        </div>
+        <div class="classGrid">
             <div class="classCard warrior" role="button" tabindex="0" onclick="selectClass('warrior')">
                 <div class="portrait tile-0" role="img" aria-label="warrior"></div><div class="className">WARRIOR</div>
                 <div class="classDesc">Master of close combat. Tough and strong, but slow.</div>

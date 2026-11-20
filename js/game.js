@@ -49,6 +49,7 @@ let fireGlow = 0;
 let currentBiome = 'forest', biomeBlend = 0;
 let bgParticles = [];
 let currentClass = null;
+let practiceMode = false, practiceCheckpoint = null, practiceRespawning = false;
 let classBonus = { damageMelee:1, damageMagic:1, damageRanged:1, damageAll:1, speedMult:1, manaRegenMult:1, hpBonus:0, manaBonus:0 };
 
 // ================================================================
@@ -212,7 +213,7 @@ function createPlayer(){
         speed:4.5*classBonus.speedMult, invincible:0, dashCooldown:0, attackCooldown:0, burn:0 };
 }
 function createMahoraga(){
-    return scaleBoss({ x: canvas.width/2, y:210, radius:70, hp:3000, maxHp:3000, phase:1, attackCooldown:1400,
+    return scaleBoss({ x: canvas.width/2, y:210, radius:70, hp:2000, maxHp:2000, phase:1, attackCooldown:1400,
         wheelAngle:0, type:'mahoraga', aiTimer:0, aiAttack:0, strafeDir:1, dashTimer:0,
         adaptWheelAngle:0, adaptWheelTarget:0, adaptWheelFlash:0, adaptWheelLit:0 });
 }
@@ -335,6 +336,10 @@ function selectClass(cls){
     runElapsed = 0; healCooldown = 0; paused = false; journalOpen = false;
 
     currentClass = cls;
+    if (!practiceRespawning){
+        practiceMode = !!document.getElementById("practiceModeToggle").checked;
+        practiceCheckpoint = null;
+    }
     classBonus = { damageMelee:1, damageMagic:1, damageRanged:1, damageAll:1, speedMult:1, manaRegenMult:1, hpBonus:0, manaBonus:0 };
     let startWeapon = 0, label = "";
     if (cls==='warrior'){ classBonus.damageMelee=1.25; classBonus.hpBonus=50; startWeapon=0; label="Warrior"; }
@@ -350,6 +355,7 @@ function selectClass(cls){
     document.getElementById("bossHealth").style.width = "100%";
     updateWeaponUI();
     showMessage(`✅ Class selected: ${label}`);
+    if (practiceMode && !practiceRespawning) savePracticeCheckpoint();
 }
 
 // ================================================================
@@ -1589,9 +1595,90 @@ function hurtPlayer(amount, color="#ff3333", fireSource=false){
     particle(player.x, player.y, color, 18, 6);
     if (player.hp <= 0){
         player.hp = 0; gameOver = true;
+        const checkpointText = document.getElementById("practiceCheckpointStatus");
+        const respawnButton = document.getElementById("deathRespawnButton");
+        if (practiceMode && practiceCheckpoint){
+            const lastBoss = practiceCheckpoint.lastBoss >= 0 ? BOSS_NAMES[practiceCheckpoint.lastBoss] : "the start of your run";
+            checkpointText.textContent = `Practice checkpoint: ${lastBoss}`;
+            respawnButton.textContent = "RESPAWN AT CHECKPOINT";
+        } else {
+            checkpointText.textContent = "";
+            respawnButton.textContent = "RESPAWN";
+        }
         document.getElementById("deathScreen").style.display = "flex";
     }
     return true;
+}
+
+function savePracticeCheckpoint(lastBoss=-1){
+    if (!practiceMode || !player || typeof killedBosses === "undefined") return;
+    practiceCheckpoint = {
+        lastBoss, currentClass, player:{...player}, classBonus:{...classBonus},
+        inventory:[...inventory], weapon, pickups:pickups.map(pickup => ({...pickup})),
+        ownedArtifacts:[...ownedArtifacts], equippedArtifacts:[...equippedArtifacts],
+        weaponAdaptation:[...weaponAdaptation], weaponAdaptTurned:[...weaponAdaptTurned],
+        adaptationGlobal, totalDamage, runElapsed, worldTime,
+        killedBosses:[...killedBosses], materials:{...materials}, panelProgression, workshopUnlocked,
+        firstBossKill, playerAdaptation
+    };
+}
+
+function respawn(){
+    if (!practiceMode || !practiceCheckpoint){ restart(); return; }
+    const checkpoint = practiceCheckpoint;
+    practiceRespawning = true;
+    try {
+        restart();
+        document.getElementById("tutorialToggle").checked = false;
+        selectClass(checkpoint.currentClass);
+    } finally {
+        practiceRespawning = false;
+    }
+
+    Object.assign(player, checkpoint.player);
+    classBonus = {...checkpoint.classBonus};
+    inventory = [...checkpoint.inventory];
+    weapon = checkpoint.weapon;
+    pickups = checkpoint.pickups.map(pickup => ({...pickup}));
+    ownedArtifacts = [...checkpoint.ownedArtifacts];
+    equippedArtifacts = [...checkpoint.equippedArtifacts];
+    weaponAdaptation = [...checkpoint.weaponAdaptation];
+    weaponAdaptTurned = [...checkpoint.weaponAdaptTurned];
+    adaptationGlobal = checkpoint.adaptationGlobal;
+    totalDamage = checkpoint.totalDamage;
+    runElapsed = checkpoint.runElapsed;
+    worldTime = checkpoint.worldTime;
+    killedBosses = new Set(checkpoint.killedBosses);
+    materials = {...checkpoint.materials};
+    panelProgression = checkpoint.panelProgression;
+    workshopUnlocked = checkpoint.workshopUnlocked;
+    firstBossKill = checkpoint.firstBossKill;
+    playerAdaptation = checkpoint.playerAdaptation;
+
+    if (checkpoint.killedBosses.length){
+        boss = ethernaty1 = dragon = solarDevourer = twoFacedDemon = null;
+        bossDefeated = firstEthernatyDefeated = dragonDefeated = solarDevourerDefeated = twoFacedDemonDefeated = true;
+        ethernatySpawned = dragonSpawned = solarDevourerSpawned = twoFacedDemonSpawned = true;
+        currentBiome = "forest";
+        if (typeof abyss !== "undefined"){
+            clearTimeout(abyss.cardTimer); abyss.cardTimer = 0; abyss.fx = []; abyss.lastBoss = null;
+        }
+    }
+    gameOver = false; victory = false; paused = false; journalOpen = false;
+    workshopMenuOpen = false; artifactMenuOpen = false;
+    document.getElementById("deathScreen").style.display = "none";
+    document.getElementById("bossName").className = "";
+    document.getElementById("bossBar").className = "";
+    document.getElementById("bossHealth").className = "";
+    document.getElementById("phase").className = "";
+    document.getElementById("message").className = "";
+    document.getElementById("bossHealth").style.width = checkpoint.killedBosses.length ? "0%" : "100%";
+    document.getElementById("damageCounter").textContent = `💥 Damage: ${Math.floor(totalDamage)}`;
+    document.getElementById("classNameText").textContent = checkpoint.currentClass[0].toUpperCase()+checkpoint.currentClass.slice(1);
+    updateWeaponUI(); updateWeaponAdaptUI(); updateArtifactBar();
+    refreshWorkshopButtons(); updateMobileInteractBtn();
+    if (checkpoint.killedBosses.length) updateWorkshopHUD();
+    updateRunHUD();
 }
 function explode(x,y,radius,dmg,scale=1){
     fireBurst(x, y, 40*scale, 11, scale);
@@ -1737,7 +1824,7 @@ function hitBoss(p){
     if (!bossDefeated && boss){
         if (Math.hypot(p.x-boss.x, p.y-boss.y) < boss.radius + p.radius){
             const wi = p.weaponIdx ?? weapon;
-            const adaptGain = hasArtifact('mahoraga_fang') ? 0.5 : 1;
+            const adaptGain = (hasArtifact('mahoraga_fang') ? 0.5 : 1) / 3;
             weaponAdaptation[wi] = Math.min(100, weaponAdaptation[wi]+adaptGain);
             const resist = Math.min(.75, weaponAdaptation[wi]*.0075);
             const dispPct = Math.min(100, weaponAdaptation[wi]*.75);
@@ -1752,7 +1839,7 @@ function hitBoss(p){
             boss.hp -= damage; igniteTarget(boss); totalDamage += damage;
             damageNumber(boss.x+random(-30,30), boss.y+random(-20,20), damage, p.color, true);
             particle(p.x, p.y, p.color, 12, 6, .6);
-            adaptationGlobal++;
+            adaptationGlobal += 1/3;
             if (adaptationGlobal >= 25 && boss.phase === 1) boss.phase = 2;
             if (adaptationGlobal >= 60 && boss.phase === 2) boss.phase = 3;
             return true;
@@ -1923,6 +2010,7 @@ function update(dt){
             ethernatyTimer = 0;
             document.getElementById("bossName").textContent = "SUMMON PANEL - ETHERNATY UNLOCKED";
             document.getElementById("bossName").className = "ethernaty";
+            savePracticeCheckpoint(0);
         }
     }
 
@@ -1958,6 +2046,7 @@ function update(dt){
             document.getElementById("bossName").className = "fire";
             document.getElementById("message").className = "fire";
             document.getElementById("phase").className = "fire";
+            savePracticeCheckpoint(1);
         }
     }
 
@@ -1987,6 +2076,7 @@ function update(dt){
             document.getElementById("bossName").className = "solar";
             document.getElementById("message").className = "solar";
             document.getElementById("phase").className = "solar";
+            savePracticeCheckpoint(2);
         }
     }
 
@@ -2010,6 +2100,7 @@ function update(dt){
             document.getElementById("bossName").className = "demon";
             document.getElementById("message").className = "demon";
             document.getElementById("phase").className = "demon";
+            savePracticeCheckpoint(3);
         }
     }
 
@@ -2030,6 +2121,7 @@ function update(dt){
             document.getElementById('phase').textContent = 'E near a station - Summon bosses to farm materials';
             refreshWorkshopButtons();
             showMessage('Sanctuary unlocked: accessory station, weapon station and summon panel!');
+            savePracticeCheckpoint(4);
             return;
         }
     }
@@ -2793,7 +2885,12 @@ function restart(){
     document.getElementById("message").className = "";
     document.getElementById("classNameText").textContent = "—";
     document.getElementById("classScreen").style.display = "flex";
+    document.getElementById("practiceCheckpointStatus").textContent = "";
+    document.getElementById("deathRespawnButton").textContent = "RESPAWN";
+    if (!practiceRespawning){
+        practiceMode = false; practiceCheckpoint = null;
+        document.getElementById("practiceModeToggle").checked = false;
+    }
     updateWeaponUI(); updateWeaponAdaptUI();
     document.getElementById("damageCounter").textContent = "💥 Damage: 0";
 }
-

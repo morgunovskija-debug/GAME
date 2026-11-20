@@ -350,6 +350,74 @@
 .overlay { text-align:center; }
 @media(prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
 
+/* Tactile metal-and-stone controls for menus and class selection. */
+.overlay button, #runTools button, #tutorialSkip, #workshopControls button, #workshopModal button {
+    border: 1px solid #718096;
+    border-radius: 8px;
+    color: #edf2f7;
+    background-color: #222c3a;
+    background-image:
+        linear-gradient(180deg, rgba(255,255,255,.12), transparent 48%, rgba(0,0,0,.2)),
+        repeating-linear-gradient(135deg, rgba(255,255,255,.025) 0 1px, transparent 1px 5px);
+    box-shadow: inset 0 1px rgba(255,255,255,.16), inset 0 -3px rgba(0,0,0,.2), 0 3px 0 #0b0f16;
+    font-weight: 700;
+    transition: transform .14s ease, border-color .14s ease, filter .14s ease, box-shadow .14s ease;
+}
+.overlay button:hover, #runTools button:hover, #tutorialSkip:hover,
+#workshopControls button:hover, #workshopModal button:not(:disabled):hover {
+    border-color: #f0cb83;
+    filter: brightness(1.14);
+    transform: translateY(-1px);
+}
+.overlay button:active, #runTools button:active, #tutorialSkip:active,
+#workshopControls button:active, #workshopModal button:not(:disabled):active {
+    transform: translateY(2px);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.35), 0 1px 0 #0b0f16;
+}
+.overlay button:disabled, #runTools button:disabled, #workshopModal button:disabled {
+    filter: grayscale(.55);
+    box-shadow: none;
+}
+.classMenuOptions { display:flex; flex-wrap:wrap; justify-content:center; gap:8px 20px; margin-top:5px; }
+.classMenuOptions .tutorialOption {
+    margin:0;
+    padding:8px 12px;
+    border:1px solid #394658;
+    border-radius:8px;
+    background:linear-gradient(145deg, rgba(40,52,68,.92), rgba(17,23,33,.96));
+    box-shadow:inset 0 1px rgba(255,255,255,.08), 0 2px 0 #05070b;
+}
+.classMenuOptions input { accent-color:#d6b77c; }
+.practiceOption span { color:#aeb9c7; font-size:11px; }
+.classCard {
+    border-radius:12px;
+    padding:14px;
+    background-image:linear-gradient(145deg, rgba(255,255,255,.08), transparent 42%, rgba(0,0,0,.2));
+    box-shadow:inset 0 1px rgba(255,255,255,.12), inset 0 -4px rgba(0,0,0,.2), 0 7px 16px rgba(0,0,0,.34);
+    transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+.classCard:hover {
+    transform:translateY(-4px);
+    box-shadow:inset 0 1px rgba(255,255,255,.2), 0 12px 24px rgba(0,0,0,.42);
+    filter:brightness(1.12);
+}
+.classCard:active { transform:translateY(-1px) scale(.99); }
+.classCard.warrior { border-color:#c96a50; background-color:#321f22; }
+.classCard.mage { border-color:#a66bbc; background-color:#2a2037; }
+.classCard.ranger { border-color:#4c9fbb; background-color:#1d2c37; }
+.classCard.summoner { border-color:#d19a50; background-color:#33291e; }
+.classCard.warrior:hover { border-color:#ff9f80; }
+.classCard.mage:hover { border-color:#e1a9f3; }
+.classCard.ranger:hover { border-color:#8de2ff; }
+.classCard.summoner:hover { border-color:#ffd38b; }
+.classCard .portrait { border-radius:8px; border:1px solid rgba(255,255,255,.24); }
+#deathScreen #practiceCheckpointStatus { color:#dfc58e; font-size:14px; }
+@media(max-width:700px) {
+    .classMenuOptions { gap:7px; }
+    .classMenuOptions .tutorialOption { width:min(100%, 330px); justify-content:flex-start; }
+    .classCard { padding:10px; }
+}
+
 /* Comfortable combat: stable HUD, clean layout. */
 #ui { text-shadow:none; }
 #bossName, #phase, #message, #attackWarning, #bossWarning .warnTitle,

@@ -12,6 +12,8 @@ python3 -m http.server 8000
 
 Then go to http://localhost:8000 and choose a class.
 
+For Vercel deployment, `npm run build` copies the static site into `public`, the configured deployment output directory.
+
 ## Files
 
 - `index.html` — screens and interface elements.
@@ -43,6 +45,10 @@ After you choose a class, a short tutorial plays before the first boss wakes up.
 5. **Heal** with H (❤️ on mobile). Healing restores 30% of max HP and then recharges for 22 seconds.
 
 Press **Skip tutorial** or **K** to skip it at any time. The King of Adaptation waits off stage until the tutorial ends. The tutorial does not count toward the run timer, and you start the fight at full HP with heal ready. It plays automatically the first time. After that, tick **Play the tutorial first** on the class screen to play it again.
+
+## Practice mode
+
+Enable **Practice mode** on the class selection screen to save a checkpoint at the start of the run and after every boss victory. If you die, **Respawn at checkpoint** restores your class, equipment, rewards, and boss unlocks to the most recent checkpoint so you can continue from the summon panel. Practice checkpoints last for the current run; restarting starts a fresh run.
 
 ## Bosses and locations
 

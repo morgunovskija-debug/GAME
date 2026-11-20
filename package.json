@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "description": "2D Boss Rush Web Game",
   "scripts": {
-    "test": "node --test tests/workshop.test.cjs tests/mobile.test.cjs tests/abyss.test.cjs tests/mythic.test.cjs tests/infinity.test.cjs tests/god.test.cjs tests/tutorial.test.cjs",
-    "build": "echo 'Static build ready'"
+    "test": "node --test tests/workshop.test.cjs tests/mobile.test.cjs tests/abyss.test.cjs tests/mythic.test.cjs tests/infinity.test.cjs tests/god.test.cjs tests/tutorial.test.cjs tests/practice.test.cjs",
+    "build": "node scripts/build.cjs"
   }
 }
-
